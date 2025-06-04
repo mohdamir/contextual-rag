@@ -3,6 +3,7 @@ from llama_index.core import SimpleDirectoryReader
 from app.core.utils import save_uploaded_file
 from app.core.vectordb import FaissVectorDB, BM25TFIDFEngine
 from app.core.hybridretriever import HybridRetrievalSystem
+from app.core.chunker import get_chunker_from_env, PDFChunkerBase
 import os
 
 router = APIRouter()
@@ -17,7 +18,9 @@ def get_hybrid_retriever() -> HybridRetrievalSystem:
     )
 
 @router.post("/")
-async def ingest_document(file: UploadFile = File(...), retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever)):
+async def ingest_document(file: UploadFile = File(...), 
+    retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever),
+    chunker:PDFChunkerBase = Depends(get_chunker_from_env)):
     try:
         # Save uploaded file
         file_path = save_uploaded_file(file, DOCUMENTS_DIR)
@@ -26,7 +29,8 @@ async def ingest_document(file: UploadFile = File(...), retriever: HybridRetriev
                 status_code=400, 
                 detail="Failed to save uploaded file"
             )
-        documents = SimpleDirectoryReader(input_files=[file_path]).load_data()
+        
+        documents = chunker.parse(file_path)
         
         # Add filename to metadata
         for doc in documents:

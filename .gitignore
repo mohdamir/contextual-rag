@@ -11,7 +11,7 @@ pip-wheel-metadata/
 *.manifest
 *.spec
 *.log
-
+testdata/groundtruthextracter.py
 # Virtual environments
 .env
 .venv

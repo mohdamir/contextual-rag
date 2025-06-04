@@ -17,3 +17,6 @@ async def evaluate_performance(request: EvaluationRequest):
         recall_at_k=metrics["recall@k"],
         details=metrics.get("details", [])
     )
+
+
+    

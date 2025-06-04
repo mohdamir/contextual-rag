@@ -1,6 +1,7 @@
 
 import os
 from app.core.vectordb import VectorDB, IRSearchEngine
+from app.core.llms import embedding_model
 from typing import List, Dict
 from llama_index.core import Document
 from llama_index.llms.openai_like import OpenAILike
@@ -17,11 +18,6 @@ class HybridRetrievalSystem:
     ):
         self.vector_db = vector_db
         self.ir_engine = ir_engine
-        self.embedding_model = OpenAILikeEmbedding(
-            api_base=os.getenv("OPENAI_LIKE_API_BASE"),
-            model_name=os.getenv("EMBEDDING_MODEL"),
-            api_key=os.getenv("OPENAI_LIKE_API_KEY")
-        )
 
     
     def index_documents(self, documents: List[Document]):
@@ -36,7 +32,7 @@ class HybridRetrievalSystem:
         embeddings = []
         for text in texts:
             print (f"Generating embedding for text: {text[:50]}...")  # Print first 50 chars
-            embedding = self.embedding_model.get_text_embedding(text)
+            embedding = embedding_model.get_text_embedding(text)
             print (f"Embedding: {embedding}")
             embeddings.append(embedding)
 
@@ -58,7 +54,7 @@ class HybridRetrievalSystem:
     ) -> List[Dict]:
         """Retrieve documents using hybrid approach"""
         # Vector search
-        query_embedding = self.embedding_model.get_text_embedding(query)
+        query_embedding = embedding_model.get_text_embedding(query)
         embeddings_np = np.array(query_embedding).astype('float32')
         vector_results = self.vector_db.search_vectors(embeddings_np, top_k)
         print (vector_results)

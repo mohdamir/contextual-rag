@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
 from app.core.vectordb import FaissVectorDB, BM25TFIDFEngine, VECTOR_STORE_PATH, BMI25_STORE_PATH, DIMENSIONS
 from app.core.hybridretriever import HybridRetrievalSystem
+from app.core.llms import llm
 from typing import List, Dict
 from llama_index.llms.openai_like import OpenAILike
 from dotenv import load_dotenv
@@ -20,12 +21,6 @@ def get_hybrid_retriever() -> HybridRetrievalSystem:
         ir_engine=ir_engine
     )
 
-llm = OpenAILike(
-    api_base=os.getenv("OPENAI_LIKE_API_BASE"),
-    model=os.getenv("LLM_MODEL"),
-    api_key=os.getenv("OPENAI_LIKE_API_KEY"),
-    temperature=0.3,
-)
 
 def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> QueryResponse:
     """Core query function used by both API and evaluator"""
