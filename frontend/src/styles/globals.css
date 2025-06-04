@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-800;
+}
+
+.container {
+  @apply max-w-4xl mx-auto px-4;
+}
+
+.btn-primary {
+  @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition;
+}
