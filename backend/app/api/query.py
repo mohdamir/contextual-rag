@@ -53,7 +53,8 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     )
 
     # Calling LLM with the constructed prompt
-    response_text = llm.generate(prompt)
+    response = llm.complete(prompt, max_tokens=1024)
+    response_text = str(response)
 
     # Prepare Sources
     sources = []
@@ -86,4 +87,4 @@ async def query_documents(request: QueryRequest, retriever: HybridRetrievalSyste
         if 'details' in result:
             print(f"Details: {result['details']}")
 
-    return perform_query(request, results)
+    return perform_query(request, results, llm)
