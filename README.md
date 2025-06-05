@@ -114,6 +114,90 @@ A full-stack application for document-based Question Answering with Contextual R
 
 ---
 
+## API Usage
+1. Ingest Documents
+Upload a document (PDF or text) to the backend for indexing.
+
+Endpoint:
+POST /api/ingest
+
+Request Example (using curl):
+
+bash
+curl -X POST http://localhost:8000/api/ingest \
+  -F "file=@/path/to/your/document.pdf"
+Description:
+Uploads and indexes a document for QA retrieval.
+
+2. Query the QA Bot
+Ask a question and get an answer from the indexed documents.
+
+Endpoint:
+POST /api/query
+
+Request Example:
+
+bash
+curl -X POST http://localhost:8000/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What was Apple\'s total gross margin percentage in fiscal year 2024?", "top_k": 3}'
+Response Example:
+
+json
+{
+  "answer": "Apple's total gross margin percentage in fiscal year 2024 was 46.2%.",
+  "sources": [
+    {
+      "text": "...",
+      "metadata": {...}
+    }
+  ]
+}
+3. Evaluate the System
+Evaluate retrieval and generation performance using ground truth data.
+
+Endpoint:
+POST /api/evaluate
+
+Request Example:
+
+bash
+curl -X POST http://localhost:8000/api/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"top_k": 3, "retrieval_method": "hybrid"}'
+Response Example:
+
+json
+{
+  "latency": 0.21,
+  "similarity_score": 0.89,
+  "recall_at_k": 0.7,
+  "details": [
+    {
+      "question": "...",
+      "ground_truth": "...",
+      "rag_answer": "...",
+      "similarity": 0.93,
+      "recall": 1.0,
+      "latency": 0.19,
+      "sources": ["..."]
+    }
+  ]
+}
+4. Upload Ground Truth Data
+Upload a ground truth JSON file for evaluation.
+
+Endpoint:
+POST /api/ground_truth/upload
+
+Request Example:
+
+bash
+curl -X POST http://localhost:8000/api/ground_truth/upload \
+  -F "file=@/path/to/groundtruth.json"
+Description:
+Uploads a ground truth file (JSON) for use in evaluation.
+
 ## Troubleshooting
 
 - **Port conflicts:** Ensure ports 3000 and 5000 are available.
