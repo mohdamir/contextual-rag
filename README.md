@@ -18,8 +18,6 @@ A full-stack application for document-based Question Answering with Contextual R
 ├── LICENSE/ # Dockerise both backend and frontend in single image
 └── README # Dockerise both backend and frontend in single image
 
-
-
 ---
 
 ## Prerequisites
@@ -34,22 +32,22 @@ A full-stack application for document-based Question Answering with Contextual R
 
 1. **Clone the repository:**
     ```
-    git clone <your-repo-url>
-    cd <your-repo-name>
+    git clone https://github.com/mohdamir/contextual-rag
+    cd contextual-rag
     ```
 
 2. **Build the Docker image:**
     ```
-    docker build -t document-qa-bot .
+    docker build -t contextual-rag-bot .
     ```
 
 3. **Run the application:**
     ```
-    docker run -p 3000:3000 -p 5000:5000 --rm document-qa-bot
+    docker run -p 3000:3000 -p 8000:8000 --rm contextual-rag-bot
     ```
 
     - **Frontend:** http://localhost:3000
-    - **Backend API:** http://localhost:5000
+    - **Backend API:** http://localhost:8000
 
 ---
 
@@ -70,7 +68,7 @@ A full-stack application for document-based Question Answering with Contextual R
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ```
 
-    - Default: http://localhost:5000
+    - Default: http://localhost:8000
 
 ---
 
@@ -109,8 +107,8 @@ A full-stack application for document-based Question Answering with Contextual R
 - Update code in `backend/` or `frontend/` as needed.
 - For Docker, rebuild and rerun after code changes:
     ```
-    docker build -t document-qa-bot .
-    docker run -p 3000:3000 -p 5000:5000 --rm document-qa-bot
+    docker build -t contextual-rag-bot .
+    docker run -p 3000:3000 -p 8000:8000 --rm contextual-rag-bot
     ```
 - For local development, restart the relevant server after changes.
 
