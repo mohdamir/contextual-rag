@@ -38,6 +38,7 @@ A full-stack application for document-based Question Answering with Contextual R
 
 2. **Build the Docker image:**
     ```
+    create the .env file in app folder and run following command to create docker image
     docker build -t contextual-rag-bot .
     ```
 
@@ -64,11 +65,13 @@ A full-stack application for document-based Question Answering with Contextual R
     ```
 
 2. **Run the Flask server:**
+    create the .env file in app folder and run following command
     ```
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ```
 
     - Default: http://localhost:8000
+    - API Docs: http://localhost:8000/docs
 
 ---
 
@@ -92,14 +95,24 @@ A full-stack application for document-based Question Answering with Contextual R
 ## Configuration
 
 - **Data directories:**  
-  Docker will auto-create:
-    - `backend/data/documents`
-    - `backend/data/vector_store`
-    - `backend/data/ground_truth`
+    - `backend/data/bm25_index_store` (to store bm25 index)
+    - `backend/data/documents` (to store uploaded pdf)
+    - `backend/data/faiss_vector_store` (to store vectors)
+    - `backend/data/ground_truth` (to store ground truth json file)
 
-- **Environment variables:**  
-  Place any required variables in `.env` files inside `backend/` and `frontend/` as needed.
-
+- **Environment Configuration:**  
+  The backend Flask application uses a `.env` file for environment-specific and sensitive configuration. This file should be placed in 'backend/app/.env'
+  ##### Example `.env` File
+  Chunking strategy for document processing
+  CHUNKING_STRATEGY=sematic_chunking # overlap_chunking or sematic_chunking
+  CHUNK_SIZE=512
+  CHUNK_OVERLAP=40
+  OPENAI_LIKE_API_BASE="https://llm-server.llmhub.t-systems.net/v2"
+  OPENAI_LIKE_API_KEY="your key from openai like model serving"
+  LLM_MODEL=claude-3-5-sonnet
+  EMBEDDING_MODEL=text-embedding-bge-m3
+  LLM_TEMPERATURE=0.3
+  
 ---
 
 ## Development Workflow
