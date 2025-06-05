@@ -8,7 +8,7 @@ class QueryRequest(BaseModel):
 class QueryResponseSource(BaseModel):
     text: str
     metadata: Dict[str, Any]
-    score: float
+    score: Optional[Dict[str, Any]] = None
 
 class QueryResponse(BaseModel):
     answer: str

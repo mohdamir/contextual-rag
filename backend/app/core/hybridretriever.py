@@ -57,10 +57,11 @@ class HybridRetrievalSystem:
         query_embedding = embedding_model.get_text_embedding(query)
         embeddings_np = np.array(query_embedding).astype('float32')
         vector_results = self.vector_db.search_vectors(embeddings_np, top_k)
-        print (vector_results)
+        print(f"Vector search results: {vector_results}")
         
         # IR search
         ir_results = self.ir_engine.search(query, top_k)
+        print(f"IR search results: {ir_results}")
         
         # Fuse results
         if fusion_method == "rrf":
@@ -140,7 +141,9 @@ class HybridRetrievalSystem:
                 'document': doc['document'],
                 'score': 0.0,
                 'vector_rank': None,
-                'ir_rank': None
+                'ir_rank': None,
+                'vector_score': 0.0,
+                'ir_score': 0.0
             }
         
         for rank_list in ranked_lists:
@@ -148,8 +151,10 @@ class HybridRetrievalSystem:
                 scores[doc_id]['score'] += 1.0 / (k + rank + 1)
                 if rank_list is ranked_lists[0]:
                     scores[doc_id]['vector_rank'] = rank + 1
+                    scores[doc_id]['vector_score'] = vector_results[rank]['score']
                 else:
                     scores[doc_id]['ir_rank'] = rank + 1
+                    scores[doc_id]['ir_score'] = ir_results[rank]['score']
         
         sorted_results = sorted(
             scores.values(),
@@ -162,6 +167,8 @@ class HybridRetrievalSystem:
             'type': 'hybrid_rrf',
             'details': {
                 'vector_rank': r['vector_rank'],
-                'ir_rank': r['ir_rank']
+                'ir_rank': r['ir_rank'],
+                'vector_score': r['vector_score'],
+                'ir_score': r['ir_score']
             }
         } for r in sorted_results]

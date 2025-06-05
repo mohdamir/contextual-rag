@@ -21,22 +21,13 @@ def get_hybrid_retriever() -> HybridRetrievalSystem:
         ir_engine=ir_engine
     )
 
-
 def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> QueryResponse:
     """Core query function used by both API and evaluator"""
     start_time = time.perf_counter()
 
-    # Sorting chunks
-    sorted_chunks = sorted(
-        retrieved_chunks,
-        key=lambda x: x.get('combined_score', x.get('vector_score', 0)),
-        reverse=True
-    )
-    top_chunks = sorted_chunks[:5]  # Use top 5 chunks as context (adjust as needed)
-
     # Building context
     context = ""
-    for i, chunk in enumerate(top_chunks):
+    for i, chunk in enumerate(retrieved_chunks):
         context += f"[{i+1}] {chunk['document'].text}\n"
 
     # Prompt construction
@@ -53,11 +44,11 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
 
     # Prepare Sources
     sources = []
-    for chunk in top_chunks:
+    for chunk in retrieved_chunks:
         sources.append(QueryResponseSource(
             text=chunk['document'].text,
             metadata=chunk['document'].metadata,
-            score=chunk.get('combined_score', chunk.get('vector_score', 0))
+            score=chunk.get('details', {})
         ))
 
     latency = time.perf_counter() - start_time
@@ -73,13 +64,9 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
 async def query_documents(request: QueryRequest, retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever)):
 
     results = retriever.retrieve(request.query, top_k=request.top_k, fusion_method="rrf")
-    
-    # Display results
-    for i, result in enumerate(results):
-        print(f"\nResult {i+1} ({result['type']}, score: {result['score']:.3f}):")
-        print(f"Document: {result['document'].metadata.get('filename', 'N/A')}")
-        print(f"Text: {result['document'].text[:200]}...")
-        if 'details' in result:
-            print(f"Details: {result['details']}")
+    print(f"Retrieved {len(results)} documents for query: {request.query}")
+    print (f"Results: {results}")
+    if not results:
+        return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)
 
     return perform_query(request, results, llm)

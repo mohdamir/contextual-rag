@@ -54,5 +54,5 @@ def get_chunker_from_env() -> PDFChunkerBase:
     chunk_size = int(os.getenv("CHUNK_SIZE", 512))
     chunk_overlap = int(os.getenv("CHUNK_OVERLAP", 40))
     if strategy == "sematic_chunking":
-        return SemanticChunker(chunk_size=chunk_size, window_size=window_size)
+        return SemanticChunker(chunk_size=chunk_size)
     return OverlapChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
