@@ -205,6 +205,21 @@ curl -X POST http://localhost:8000/api/ground_truth/upload \
 Description:
 Uploads a ground truth file (JSON) for use in evaluation.
 
+---
+
+## 📊 Summary Metrics
+
+| Metric               | Value                |
+|----------------------|---------------------|
+| **Avg. Latency (s)** | 4.49                |
+| **Avg. Similarity**  | 0.86                |
+| **Recall@K**         | 0.8                 |
+
+- **Average Latency:** 4.49 seconds per query
+- **Average Semantic Similarity:** 0.86 (cosine similarity between ground truth and generated answers)
+- **Recall@K:** 80% (8 out of 10 queries had ground truth context in the retrieved sources)
+
+---
 ## Troubleshooting
 
 - **Port conflicts:** Ensure ports 3000 and 5000 are available.
