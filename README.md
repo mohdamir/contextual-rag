@@ -232,9 +232,15 @@ Uploads a ground truth file (JSON) for use in evaluation.
 - **Recall@K:** 80% (8 out of 10 queries had ground truth context in the retrieved sources)
 
 ---
+
+## High Level System Design Overview and Design Decisions
+
+System design document (**ContextualRAG.pdf**) have been added in folder **/documentation** for high level design and explainatin of design decisions
+
+---
 ## Troubleshooting
 
-- **Port conflicts:** Ensure ports 3000 and 5000 are available.
+- **Port conflicts:** Ensure ports 3000 and 8000 are available.
 - **Node.js errors:** Use Node.js 16 or newer.
 - **Python errors:** Use Python 3.10+.
 - **Module not found:** Check file paths and case sensitivity, especially in imports.
