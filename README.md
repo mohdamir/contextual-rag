@@ -127,6 +127,7 @@ A full-stack application for document-based Question Answering with Contextual R
 ---
 
 ## API Usage
+**API Docs:** http://localhost:8000/docs
 ### 1. Ingest Documents
 Upload a document (PDF or text) to the backend for indexing.
 
