@@ -12,7 +12,3 @@ async def evaluate_performance(request: EvaluationRequest):
     latency = time.perf_counter() - start_time
 
     return metrics
-    
-    return {    }
-
-    
