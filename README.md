@@ -10,7 +10,7 @@ A full-stack application for document-based Question Answering with Contextual R
 
 ## Project Structure
 
-<pre> ├── backend/ # Flask API application 
+<pre>├── backend/ # Flask API application 
 ├── frontend/ # Next.js application 
 ├── testdata/ # Data directories (Sample pdf and groundtruth.json) 
 ├── Dockerfile # Dockerizes both backend and frontend in a single image 
