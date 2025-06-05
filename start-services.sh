@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Start backend
+# Start FastAPI backend
 cd /workspace/backend
 uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 
-# Start frontend
+# Start Next.js frontend
 cd /workspace/frontend
-npm run dev &
+npm run dev -- --port 3000
 
-# Keep container running
-tail -f /dev/null
+# Wait for background processes
+wait

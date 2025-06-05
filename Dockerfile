@@ -1,46 +1,41 @@
-FROM ubuntu:22.04
+FROM python:3.10-slim
 
-# Install system dependencies
+# Install system dependencies, Node.js, and npm
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    curl \
-    git \
-    python3.10 \
-    python3-pip \
-    python3.10-venv \
-    nodejs \
-    npm \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    python3-dev \
-    swig \
-    cmake \
-    libopenblas-dev \
-    liblapack-dev \
+    apt-get install -y --no-install-recommends \
+        git \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        python3-dev \
+        swig \
+        cmake \
+        libopenblas-dev \
+        liblapack-dev \
+        nodejs \
+        npm \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python 3.10 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-
-# Install backend requirements
+# Backend setup
 WORKDIR /workspace/backend
-COPY backend/requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY backend/ ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install frontend dependencies
+# Frontend setup
 WORKDIR /workspace/frontend
-COPY frontend/package*.json .
+COPY frontend/ ./
+RUN npm install next@latest
 RUN npm install
 
-# Create data directories
-RUN mkdir -p /workspace/backend/data/documents && \
-    mkdir -p /workspace/backend/data/vector_store && \
-    mkdir -p /workspace/backend/data/ground_truth
+# Data directories
+WORKDIR /workspace/backend/app/data
+RUN mkdir -p bm25_index_store documents faiss_vector_store ground_truth
 
-# Create startup script
+# Startup script
 WORKDIR /workspace
-COPY .devcontainer/start-services.sh /usr/local/bin/
+COPY start-services.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/start-services.sh
+
+EXPOSE 8000 3000
 
 ENTRYPOINT ["/usr/local/bin/start-services.sh"]
