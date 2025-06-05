@@ -1,0 +1,82 @@
+[
+  {
+    "question": "What was Apple's total net sales in fiscal year 2024?",
+    "answer": "Apple's total net sales in fiscal year 2024 were $391,035 million.",
+    "context": "Total net sales $ 391,035 2 % $ 383,285 (3)% $ 394,328",
+    "page": 25,
+    "span_start": 381,
+    "span_end": 435
+  },
+  {
+    "question": "Which segment had the highest net sales for Apple in 2024?",
+    "answer": "The Americas segment had the highest net sales for Apple in 2024 at $167,045 million.",
+    "context": "Americas $ 167,045 3 % $ 162,560 (4)% $ 169,658",
+    "page": 25,
+    "span_start": 164,
+    "span_end": 211
+  },
+  {
+    "question": "What was the year-over-year change in Greater China net sales in 2024?",
+    "answer": "Greater China net sales decreased by 8% year-over-year in 2024.",
+    "context": "Greater China 66,952 (8)% 72,559 (2)% 74,200",
+    "page": 25,
+    "span_start": 250,
+    "span_end": 294
+  },
+  {
+    "question": "Which product category had the highest net sales for Apple in 2024?",
+    "answer": "iPhone had the highest net sales for Apple in 2024 at $201,183 million.",
+    "context": "iPhone $ 201,183 — % $ 200,583 (2)% $ 205,489",
+    "page": 26,
+    "span_start": 158,
+    "span_end": 203
+  },
+  {
+    "question": "What was the year-over-year change in Services net sales in 2024?",
+    "answer": "Services net sales increased by 13% year-over-year in 2024.",
+    "context": "Services (1) 96,169 13 % 85,200 9 % 78,129",
+    "page": 26,
+    "span_start": 338,
+    "span_end": 380
+  },
+  {
+    "question": "What was Apple's total gross margin percentage in fiscal year 2024?",
+    "answer": "Apple's total gross margin percentage in fiscal year 2024 was 46.2%.",
+    "context": "Total gross margin percentage 46.2 % 44.1 % 43.3 %",
+    "page": 27,
+    "span_start": 371,
+    "span_end": 421
+  },
+  {
+    "question": "How much did Apple spend on research and development in 2024?",
+    "answer": "Apple spent $31,370 million on research and development in 2024.",
+    "context": "Research and development $ 31,370 5 % $ 29,915 14 % $ 26,251",
+    "page": 27,
+    "span_start": 1312,
+    "span_end": 1372
+  },
+  {
+    "question": "What was Apple's effective tax rate in 2024?",
+    "answer": "Apple's effective tax rate in 2024 was 24.1%.",
+    "context": "Effective tax rate 24.1 % 14.7 % 16.2 %",
+    "page": 28,
+    "span_start": 244,
+    "span_end": 283
+  },
+  {
+    "question": "How much did Apple spend on share repurchases in fiscal year 2024?",
+    "answer": "Apple repurchased $95.0 billion of its common stock in fiscal year 2024.",
+    "context": "During 2024, the Company repurchased $95.0 billion of its common stock and paid dividends and dividend equivalents of $15.2 billion.",
+    "page": 29,
+    "span_start": 930,
+    "span_end": 1062
+  },
+  {
+    "question": "What was the balance of Apple's deemed repatriation tax payable as of September 28, 2024?",
+    "answer": "The balance of Apple's deemed repatriation tax payable was $16.5 billion as of September 28, 2024.",
+    "context": "As of September 28, 2024, the balance of the deemed repatriation tax payable imposed by the U.S. Tax Cuts and Jobs Act of 2017 (the ",
+    "page": 28,
+    "span_start": 3387,
+    "span_end": 3519
+  }
+]

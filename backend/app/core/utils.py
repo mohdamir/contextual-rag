@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Union
+import json
 
 def ensure_directory_exists(path: Union[str, Path]) -> Path:
     """Ensure a directory exists, create if it doesn't"""

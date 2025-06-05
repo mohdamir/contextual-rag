@@ -1,3 +1,4 @@
+// filepath: /workspaces/contextual-rag/frontend/src/components/Layout.js
 import Link from 'next/link';
 
 export default function Layout({ children }) {
@@ -6,11 +7,19 @@ export default function Layout({ children }) {
       <header className="bg-white shadow-sm">
         <div className="container py-4">
           <nav className="flex space-x-6">
-            <Link href="/" className="font-semibold text-primary text-lg">RAG Evaluator</Link>
+            <Link href="/" passHref legacyBehavior>
+              <a className="font-semibold text-primary text-lg">Contextual RAG</a>
+            </Link>
             <div className="flex-1"></div>
-            <Link href="/" className="hover:text-primary">Query</Link>
-            <Link href="/ingest" className="hover:text-primary">Ingest</Link>
-            <Link href="/evaluate" className="hover:text-primary">Evaluate</Link>
+            <Link href="/" passHref legacyBehavior>
+              <a className="hover:text-primary">Query</a>
+            </Link>
+            <Link href="/ingest" passHref legacyBehavior>
+              <a className="hover:text-primary">Ingest</a>
+            </Link>
+            <Link href="/evaluate" passHref legacyBehavior>
+              <a className="hover:text-primary">Evaluate</a>
+            </Link>
           </nav>
         </div>
       </header>

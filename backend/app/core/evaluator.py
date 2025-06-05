@@ -2,28 +2,40 @@ import os
 import time
 import numpy as np
 import pandas as pd
+import json
 from sentence_transformers import util, SentenceTransformer
 from sklearn.metrics import ndcg_score
-from app.api.query import perform_query
+from app.api.query import perform_query, get_hybrid_retriever
+from app.core.hybridretriever import HybridRetrievalSystem
 from app.models.schemas import QueryRequest, GroundTruthItem
 from .utils import load_ground_truth_files
+from app.core.llms import llm, embedding_model
 from llama_index.embeddings.openai_like import OpenAILikeEmbedding
+import torch
 
 from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize models
-similarity_model = OpenAILikeEmbedding(
-            api_base=os.getenv("OPENAI_LIKE_API_BASE"),
-            model_name=os.getenv("EMBEDDING_MODEL"),
-            api_key=os.getenv("OPENAI_LIKE_API_KEY")
-        )
+similarity_model = embedding_model
 GT_DIR = "./data/ground_truth"
 
 def calculate_similarity(answer1: str, answer2: str) -> float:
     """Calculate cosine similarity between two answers"""
-    embeddings = similarity_model.encode([answer1, answer2], convert_to_tensor=True)
-    return util.cos_sim(embeddings[0], embeddings[1]).item()
+    answer1_embedding = similarity_model.get_text_embedding(answer1)
+    answer2_embedding = similarity_model.get_text_embedding(answer2)
+    
+    if not isinstance(answer1_embedding, torch.Tensor):
+        answer1_embedding = torch.tensor(answer1_embedding)
+    if not isinstance(answer2_embedding, torch.Tensor):
+        answer2_embedding = torch.tensor(answer2_embedding)
+    
+    if len(answer1_embedding.shape) == 1:
+        answer1_embedding = answer1_embedding.unsqueeze(0)
+    if len(answer2_embedding.shape) == 1:
+        answer2_embedding = answer2_embedding.unsqueeze(0)
+    
+    return util.cos_sim(answer1_embedding, answer2_embedding).item()
 
 def calculate_recall(ground_truth: GroundTruthItem, retrieved_sources: list) -> float:
     """Calculate recall for a single query"""
@@ -66,7 +78,9 @@ def evaluate_rag(top_k: int = 3) -> dict:
         # Run query
         start_time = time.perf_counter()
         query_request = QueryRequest(query=gt_item.question, top_k=top_k)
-        response = perform_query(query_request)
+        retriever = get_hybrid_retriever()
+        retrieved_chunks = retriever.retrieve(query_request.query, top_k=top_k, fusion_method="rrf")
+        response = perform_query(query_request, retrieved_chunks, llm)
         latency = time.perf_counter() - start_time
         
         # Calculate metrics
@@ -87,10 +101,4 @@ def evaluate_rag(top_k: int = 3) -> dict:
             "sources": [s.text[:200] + "..." for s in response.sources]
         })
     
-    # Calculate aggregate metrics
-    return {
-        "latency": np.mean(metrics["latencies"]) if metrics["latencies"] else 0.0,
-        "similarity": np.mean(metrics["similarities"]) if metrics["similarities"] else 0.0,
-        "recall@k": np.mean(metrics["recalls"]) if metrics["recalls"] else 0.0,
-        "details": metrics["details"]
-    }
+    return metrics
