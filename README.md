@@ -103,15 +103,14 @@ A full-stack application for document-based Question Answering with Contextual R
 - **Environment Configuration:**  
   The backend Flask application uses a `.env` file for environment-specific and sensitive configuration. This file should be placed in 'backend/app/.env'
   ##### Example `.env` File
-  Chunking strategy for document processing
-  CHUNKING_STRATEGY=sematic_chunking # overlap_chunking or sematic_chunking
-  CHUNK_SIZE=512
-  CHUNK_OVERLAP=40
-  OPENAI_LIKE_API_BASE="https://llm-server.llmhub.t-systems.net/v2"
-  OPENAI_LIKE_API_KEY="your key from openai like model serving"
-  LLM_MODEL=claude-3-5-sonnet
-  EMBEDDING_MODEL=text-embedding-bge-m3
-  LLM_TEMPERATURE=0.3
+  - CHUNKING_STRATEGY=sematic_chunking # overlap_chunking or sematic_chunking
+  - CHUNK_SIZE=512
+  - CHUNK_OVERLAP=40
+  - OPENAI_LIKE_API_BASE="https://llm-server.llmhub.t-systems.net/v2"
+  - OPENAI_LIKE_API_KEY="your key from openai like model serving"
+  - LLM_MODEL=claude-3-5-sonnet
+  - EMBEDDING_MODEL=text-embedding-bge-m3
+  - LLM_TEMPERATURE=0.3
   
 ---
 
