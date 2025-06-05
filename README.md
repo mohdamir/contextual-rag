@@ -227,14 +227,8 @@ Uploads a ground truth file (JSON) for use in evaluation.
 - **Python errors:** Use Python 3.10+.
 - **Module not found:** Check file paths and case sensitivity, especially in imports.
 
----
-
-## References
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [Docker Documentation](https://docs.docker.com/)
 
 ---
+## Authors
 
-**Happy Coding!**
+- **Mohammad Amir:** amir.zilli@gmail.com
