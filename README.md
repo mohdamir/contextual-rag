@@ -115,11 +115,11 @@ A full-stack application for document-based Question Answering with Contextual R
 ---
 
 ## API Usage
-1. Ingest Documents
+### 1. Ingest Documents
 Upload a document (PDF or text) to the backend for indexing.
 
 
-### POST /api/ingest
+#### POST /api/ingest
 
 Request Example (using curl):
 
@@ -130,11 +130,11 @@ curl -X POST http://localhost:8000/api/ingest \
 Description:
 Uploads and indexes a document for QA retrieval.
 
-2. Query the QA Bot
+### 2. Query the QA Bot
 Ask a question and get an answer from the indexed documents.
 
 
-### POST /api/query
+#### POST /api/query
 
 Request Example:
 
@@ -156,14 +156,15 @@ json
   ]
 }
 ```
-3. Evaluate the System
+
+### 3. Evaluate the System
 Evaluate retrieval and generation performance using ground truth data.
 
-### POST /api/evaluate
+#### POST /api/evaluate
 
 Request Example:
 
-````
+```
 curl -X POST http://localhost:8000/api/evaluate \
   -H "Content-Type: application/json" \
   -d '{"top_k": 3, "retrieval_method": "hybrid"}'
@@ -189,10 +190,10 @@ json
 }
 ```
 
-4. Upload Ground Truth Data
+### 4. Upload Ground Truth Data
 Upload a ground truth JSON file for evaluation.
 
-### POST /api/ground_truth/upload
+#### POST /api/ground_truth/upload
 
 Request Example:
 
