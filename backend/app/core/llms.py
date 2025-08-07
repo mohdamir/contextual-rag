@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import httpx
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.core.llms import ChatMessage
 
 # Configure logging
 logger = getLogger(__name__)
@@ -51,6 +52,23 @@ def get_llm() -> Ollama:
         temperature=float(os.getenv("LLM_TEMPERATURE", 0.7)),
         request_timeout=60.0
     )
+
+from typing import List, Dict
+
+def query_ollama(prompt: str, system_prompt: str = None) -> str:
+    llm = get_llm()
+    try:
+        messages = [
+            ChatMessage(
+                role="system", content="You are a pirate with a colorful personality"
+            ),
+            ChatMessage(role="user", content="What is your name"),
+        ]
+        resp = llm.chat(messages)
+        return resp
+    except Exception as e:
+        print(f"Error querying Ollama: {e}")
+        raise
 
 # Initialize models
 embedding_model = get_embedding_model()

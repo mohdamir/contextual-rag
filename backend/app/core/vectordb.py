@@ -3,13 +3,14 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 from llama_index.core import VectorStoreIndex, StorageContext, SimpleDirectoryReader, Document
-from llama_index.core.schema import Document, TextNode
+from llama_index.core.schema import Document, TextNode, NodeWithScore
 from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.storage.index_store import SimpleIndexStore
 from app.core.chunker import get_chunker_from_env, PDFChunkerBase
 from app.core.llms import get_embedding_model
+from app.models.schemas import RetrievedChunk
 from llama_index.core import load_index_from_storage
 from sqlalchemy import make_url, text
 from rank_bm25 import BM25Okapi
@@ -47,6 +48,10 @@ class VectorDB(ABC):
     def index_file(self, file_path:str, file_metadata: dict = None) -> bool:
         pass
 
+    @abstractmethod
+    def retrieve_from_index(self, query_data) -> List[Dict]:
+        pass
+
 class IRSearchEngine(ABC):
     @abstractmethod
     def index_documents(self, documents: List[Document]):
@@ -82,7 +87,9 @@ class PGVectorDB(VectorDB):
         self.vector_store = self._init_vector_store(recreate_table)
         self.doc_store = SimpleDocumentStore()
         self.index_store = SimpleIndexStore()
-        self._load_stores()
+
+        if recreate_table == False:
+            self._load_stores()
         self.document_map = {}
 
     def _init_vector_store(self, recreate_table: bool) -> PGVectorStore:
@@ -125,9 +132,11 @@ class PGVectorDB(VectorDB):
         """Drop the table if it exists"""
         from sqlalchemy import create_engine
         
+        llama_table_name = f"data_{self.table_name}"
+        logger.info(f"Deleting table {llama_table_name}")
         engine = create_engine(self.connection_string)
         with engine.connect() as conn:
-            conn.execute(text(f"DROP TABLE IF EXISTS {self.table_name}"))
+            conn.execute(text(f"DROP TABLE IF EXISTS {llama_table_name}"))
             conn.commit()
 
     def _ensure_vector_extension(self):
@@ -285,10 +294,6 @@ class PGVectorDB(VectorDB):
             )
             raise ValueError(f"Vector search failed: {str(e)}") from e
 
-    def persist(self):
-        """No-op for PGVector (data is automatically persisted in database)"""
-        pass
-
     @classmethod
     def load_from_disk(cls, connection_string: str, table_name: str, embed_dim: int = 1024):
         """Load existing PGVector store"""
@@ -310,12 +315,10 @@ class PGVectorDB(VectorDB):
         
         # Set custom doc_id for all file types, and handle page_label preservation for PDFs
         file_name = os.path.basename(file_path)
-        custom_doc_id = f"{file_name}_part_0" 
         page_labels = {}
         for idx, doc in enumerate(document):
             if (file_extension == 'pdf') and ('page_label' in doc.metadata):
                 page_labels[idx] = doc.metadata['page_label']
-            doc.doc_id = custom_doc_id
 
         try:
             chunk_size=512
@@ -323,8 +326,6 @@ class PGVectorDB(VectorDB):
             parser = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
             nodes = parser.get_nodes_from_documents(document)
             logger.info(f"Number of nodes after parsing: {len(nodes)}")
-
-            # Update nodes with hsimetadata and preserved page labels (only for PDFs)
             for idx, node in enumerate(nodes):
                 if (file_extension == 'pdf') and (idx in page_labels):
                     node.metadata['page_label'] = page_labels[idx]
@@ -354,7 +355,7 @@ class PGVectorDB(VectorDB):
                 index.insert_nodes(nodes)
                 logger.info(f"Inserted {len(nodes)} nodes into index {index.index_id}")
                 os.remove(file_path)
-                self.persist()
+                storage_context.persist(persist_dir="./storage")
                 return True
         except Exception as e:
             logger.error(f"Error during document indexing or embedding process: {str(e)}", exc_info=True)
@@ -367,7 +368,7 @@ class PGVectorDB(VectorDB):
         file_extension = file_path.split('.')[-1].lower()
         try:
             if file_extension in ['pdf', 'docx']:
-                document = SimpleDirectoryReader(input_files=[file_path], filename_as_id=True).load_data()
+                document = SimpleDirectoryReader(input_files=[file_path], filename_as_id=False).load_data()
             else:
                 logger.error(f"Unsupported file type: {file_extension}")
                 raise ValueError(f"Unsupported file type: {file_extension}")
@@ -407,6 +408,7 @@ class PGVectorDB(VectorDB):
         
     def _load_stores(self):
         """Load stores from files if they exist, otherwise keep empty stores"""
+        logger.info("Loading doc store and index store")
         docstore_path = os.path.join(STORAGE_DIR, "docstore.json")
         index_store_path = os.path.join(STORAGE_DIR, "index_store.json")
         
@@ -415,11 +417,63 @@ class PGVectorDB(VectorDB):
         
         if os.path.exists(index_store_path):
             self.index_store = SimpleIndexStore.from_persist_path(index_store_path)
-    
-    def persist(self):
-        """Save both stores to disk"""
-        self.doc_store.persist(os.path.join(STORAGE_DIR, "docstore.json"))
-        self.index_store.persist(os.path.join(STORAGE_DIR, "index_store.json"))
+
+    def retrieve_from_index(self, query:str, top_k: int) -> List[Dict]:
+        logger.info(f"Retrieving data for query: {query}")
+        logger.info(f"Docstore contains {len(self.doc_store.docs)} documents")
+        logger.info(f"First 10 doc IDs: {list(self.doc_store.docs.keys())}")
+        try:
+            embedding_model = get_embedding_model()
+            # Re-create the storage context
+            storage_context = StorageContext.from_defaults(vector_store=self.vector_store,
+                                                           docstore=self.doc_store,
+                                                           index_store=self.index_store)
+
+            # Retrieve the existing index ID from MongoDBIndexStore
+            index_id = self.get_existing_index_id()
+            if not index_id:
+                raise ValueError("No index found in the index storage.")
+
+            # Load the index from storage
+            vector_index = load_index_from_storage(storage_context=storage_context,
+                                                   embed_model=embedding_model,
+                                                   index_id=index_id)
+
+            # Create the retriever for the index
+            retriever = vector_index.as_retriever(verbose=True, similarity_top_k=top_k)
+
+            # Perform the retrieval with the user query
+            retrieved_nodes: List[NodeWithScore] = retriever.retrieve(query)
+            logger.info(f"Number of retrieved nodes {len(retrieved_nodes)}")
+            results = []
+            for node_with_score in retrieved_nodes:
+                node = node_with_score.node
+                logger.info(f"Node with node id {node.node_id}")
+                # Get document reference
+                doc = None
+                doc = self.doc_store.get_document(node.node_id)
+
+                print (type(doc))
+                
+                # Prepare metadata
+                metadata = {}
+                if hasattr(node, 'metadata'):   
+                    metadata.update(node.metadata)
+                if doc and hasattr(doc, 'metadata'):
+                    metadata.update(doc.metadata or {})
+                
+                # Format result
+                results.append({
+                    'score': float(node_with_score.score),
+                    'document': doc,
+                    'type': 'vector',
+                    'metadata': metadata,
+                    'doc_id': node.node_id  # Fall back to node ID if no doc ID
+                })
+            return results
+        except Exception as e:
+            logger.error(f"Error during retrieval process: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to retrieve data from index: {e}")
     
 
 """ class FaissVectorDB(VectorDB):
@@ -622,7 +676,8 @@ class BM25TFIDFEngine(IRSearchEngine):
                     'bm25_score': bm25_scores[idx],
                     'bm25_rank': rank,
                     'tfidf_score': 0,
-                    'tfidf_rank': float('inf')
+                    'tfidf_rank': float('inf'),
+                    'id_': doc.doc_id
                 }
         
         # Process TF-IDF results
@@ -637,7 +692,8 @@ class BM25TFIDFEngine(IRSearchEngine):
                     'bm25_score': 0,
                     'bm25_rank': float('inf'),
                     'tfidf_score': tfidf_scores[idx],
-                    'tfidf_rank': rank
+                    'tfidf_rank': rank,
+                    'id_': doc.doc_id
                 }
         
         # Calculate combined score using reciprocal rank fusion

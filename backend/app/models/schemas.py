@@ -14,6 +14,11 @@ class QueryResponse(BaseModel):
     answer: str
     sources: List[QueryResponseSource]
 
+class RetrievedChunk(BaseModel):
+    text: str
+    info: Dict[str, Any]
+    score: float
+
 class GroundTruthItem(BaseModel):
     question: str
     answer: str

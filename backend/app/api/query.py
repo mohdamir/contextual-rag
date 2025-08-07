@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
 from app.core.vectordb import BM25TFIDFEngine, BMI25_STORE_PATH, PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
-from app.core.llms import llm
+from app.core.llms import llm, query_ollama
 from typing import List, Dict
 from dotenv import load_dotenv
 
@@ -27,10 +27,41 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     """Core query function used by both API and evaluator"""
     start_time = time.perf_counter()
 
+
     # Building context
     context = ""
     for i, chunk in enumerate(retrieved_chunks):
         context += f"[{i+1}] {chunk['document'].text}\n"
+
+    system_prompt = """You are an expert AI assistant trained to answer questions strictly based on the provided context. Follow these rules:
+
+        1. **Source-Based Answers**:  
+        - Only use information from the given context to formulate answers.  
+        - If the context is insufficient, respond: "The document does not contain relevant information."  
+
+        2. **Precision & Clarity**:  
+        - Provide concise, well-structured answers.  
+        - Use bullet points or numbered lists for multi-part answers when appropriate.  
+
+        3. **Honesty & Transparency**:  
+        - Never hallucinate or invent details.  
+        - Explicitly state when you’re uncertain due to missing context.  
+
+        4. **Formatting**:  
+        - Highlight key terms **like this** for emphasis.  
+        - Maintain a neutral, professional tone.  
+
+        5. **User Intent**:  
+        - If the question is ambiguous, request clarification while suggesting possible interpretations.  
+
+        Example Interaction:  
+        User: "What are the key features of Project X?"  
+        Context: [Document describing Project X]  
+        You: "Based on the document:  
+        - **Feature 1**: [Description]  
+        - **Feature 2**: [Description]  
+        [Source: Section 3.2 of the document]"
+        """
 
     # Prompt construction
     prompt = (
@@ -41,7 +72,7 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     )
 
     # Calling LLM with the constructed prompt
-    response = llm.complete(prompt, max_tokens=1024)
+    response = query_ollama(prompt=prompt, system_prompt=system_prompt)
     response_text = str(response)
 
     # Prepare Sources

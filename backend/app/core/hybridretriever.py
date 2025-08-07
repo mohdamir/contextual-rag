@@ -53,9 +53,10 @@ class HybridRetrievalSystem:
     ) -> List[Dict]:
         """Retrieve documents using hybrid approach"""
         # Vector search
-        query_embedding = embedding_model.get_text_embedding(query)
-        embeddings_np = np.array(query_embedding).astype('float32')
-        vector_results = self.vector_db.search_vectors(embeddings_np, top_k)
+        #query_embedding = embedding_model.get_text_embedding(query)
+        #embeddings_np = np.array(query_embedding).astype('float32')
+        #vector_results = self.vector_db.search_vectors(embeddings_np, top_k)
+        vector_results =self.vector_db.retrieve_from_index(query, top_k)
         print(f"Vector search results: {vector_results}")
         
         # IR search
@@ -129,13 +130,13 @@ class HybridRetrievalSystem:
     ) -> List[Dict]:
         """Combine results using Reciprocal Rank Fusion"""
         ranked_lists = [
-            {r['document'].doc_id: i for i, r in enumerate(vector_results)},
-            {r['document'].doc_id: i for i, r in enumerate(ir_results)}
+            {r['document'].id_: i for i, r in enumerate(vector_results)},
+            {r['document'].id_: i for i, r in enumerate(ir_results)}
         ]
         
         scores = {}
         for doc in vector_results + ir_results:
-            doc_id = doc['document'].doc_id
+            doc_id = doc['document'].id_
             scores[doc_id] = {
                 'document': doc['document'],
                 'score': 0.0,
