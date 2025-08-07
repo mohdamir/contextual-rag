@@ -55,20 +55,68 @@ def get_llm() -> Ollama:
 
 from typing import List, Dict
 
-def query_ollama(prompt: str, system_prompt: str = None) -> str:
-    llm = get_llm()
+import json
+import requests
+from typing import Optional, Dict, Any
+
+def query_ollama(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    model: str = "llama3",
+    stream: bool = False
+) -> str:
+    """
+    Improved Ollama query function that handles both streaming and non-streaming responses.
+    
+    Args:
+        prompt: User's input/question
+        system_prompt: Optional system message
+        model: Model name (default: llama3)
+        base_url: Ollama server URL
+        stream: Whether to use streaming mode
+        
+    Returns:
+        Complete generated response
+    """
+    base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+    
     try:
-        messages = [
-            ChatMessage(
-                role="system", content="You are a pirate with a colorful personality"
-            ),
-            ChatMessage(role="user", content="What is your name"),
-        ]
-        resp = llm.chat(messages)
-        return resp
-    except Exception as e:
-        print(f"Error querying Ollama: {e}")
-        raise
+        response = requests.post(
+            f"{base_url}/api/chat",
+            json={
+                "model": model,
+                "messages": messages,
+                "stream": stream,
+                "options": {"temperature": 0.7}
+            },
+            stream=stream,
+            timeout=60
+        )
+        response.raise_for_status()
+        
+        if stream:
+            full_response = ""
+            for line in response.iter_lines():
+                if line:
+                    chunk = json.loads(line)
+                    if "message" in chunk:
+                        full_response += chunk["message"]["content"]
+                    elif "response" in chunk:
+                        full_response += chunk["response"]
+            return full_response
+        else:
+            data = response.json()
+            return data.get("message", {}).get("content", data.get("response", ""))
+            
+    except requests.exceptions.RequestException as e:
+        raise ConnectionError(f"Ollama connection error: {e}")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid response format: {e}")
+
 
 # Initialize models
 embedding_model = get_embedding_model()
