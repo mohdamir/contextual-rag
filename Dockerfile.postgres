@@ -1,0 +1,15 @@
+FROM ankane/pgvector:latest
+
+# Create initialization script for pgvector
+COPY init.sql /docker-entrypoint-initdb.d/
+
+# Set default environment variables
+ENV POSTGRES_DB=vectordb
+ENV POSTGRES_USER=vectoruser
+ENV POSTGRES_PASSWORD=vectorpass
+
+# Expose PostgreSQL default port
+EXPOSE 5432
+
+# Keep the default PostgreSQL entrypoint
+CMD ["postgres"]

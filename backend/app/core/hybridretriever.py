@@ -4,8 +4,6 @@ from app.core.vectordb import VectorDB, IRSearchEngine
 from app.core.llms import embedding_model
 from typing import List, Dict
 from llama_index.core import Document
-from llama_index.llms.openai_like import OpenAILike
-from llama_index.embeddings.openai_like import OpenAILikeEmbedding
 from dotenv import load_dotenv
 import numpy as np
 load_dotenv()
@@ -19,7 +17,6 @@ class HybridRetrievalSystem:
         self.vector_db = vector_db
         self.ir_engine = ir_engine
 
-    
     def index_documents(self, documents: List[Document]):
         """Index documents in both vector and IR systems"""
         # Index for IR search
@@ -36,15 +33,17 @@ class HybridRetrievalSystem:
             print (f"Embedding: {embedding}")
             embeddings.append(embedding)
 
-        print (f"Indexing {len(documents)} documents in vector DB")
-        
+        print (f"Emebddings of {len(documents)} documents in vector DB")
         embeddings_np = np.array(embeddings).astype('float32')
     
         print(f"Indexing {len(documents)} documents in vector DB")
         self.vector_db.index_vectors(ids, embeddings_np, documents)
         self.vector_db.persist()
 
-    
+    def index_file(self, file_path: str):
+        self.vector_db.index_file(file_path)
+
+
     def retrieve(
         self,
         query: str,

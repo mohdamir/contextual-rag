@@ -1,0 +1,4 @@
+FROM ollama/ollama
+COPY ollamaentrypoint.sh /ollamaentrypoint.sh
+RUN chmod +x /ollamaentrypoint.sh
+ENTRYPOINT ["/ollamaentrypoint.sh"]

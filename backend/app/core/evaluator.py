@@ -10,7 +10,6 @@ from app.core.hybridretriever import HybridRetrievalSystem
 from app.models.schemas import QueryRequest, GroundTruthItem
 from .utils import load_ground_truth_files
 from app.core.llms import llm, embedding_model
-from llama_index.embeddings.openai_like import OpenAILikeEmbedding
 import torch
 
 from dotenv import load_dotenv

@@ -20,6 +20,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+bm25_index_store/
+storage/
+backend/data
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -90,3 +93,5 @@ Thumbs.db
 *.bak
 *.tmp
 
+backend/data/bm25_index_store/bm25_index.pkl
+backend/data/bm25_index_store/tfidf_index.pkl

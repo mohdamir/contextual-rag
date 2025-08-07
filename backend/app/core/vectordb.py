@@ -3,19 +3,34 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 from llama_index.core import VectorStoreIndex, StorageContext, SimpleDirectoryReader, Document
-from llama_index.vector_stores.faiss import FaissVectorStore
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-import faiss
+from llama_index.core.schema import Document, TextNode
+from llama_index.vector_stores.postgres import PGVectorStore
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.core.storage.index_store import SimpleIndexStore
+from app.core.chunker import get_chunker_from_env, PDFChunkerBase
+from app.core.llms import get_embedding_model
+from llama_index.core import load_index_from_storage
+from sqlalchemy import make_url, text
 from rank_bm25 import BM25Okapi
 from sklearn.feature_extraction.text import TfidfVectorizer
 from .utils import ensure_directory_exists
 import pickle
 from pathlib import Path
+from app.core.logger import logger
+import psycopg2
 
 VECTOR_STORE_PATH = "./data/faiss_vector_store/index.faiss"
 BMI25_STORE_PATH = "./data/bm25_index_store"
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
-DIMENSIONS = 1024
+
+# Define storage paths
+STORAGE_DIR = "storage"
+DOCSTORE_PATH = os.path.join(STORAGE_DIR, "docstore.json")
+INDEX_STORE_PATH = os.path.join(STORAGE_DIR, "index_store.json")
+
+# Create storage directory if it doesn't exist
+os.makedirs(STORAGE_DIR, exist_ok=True)
 
 # ====================== Abstract Interfaces ======================
 
@@ -28,6 +43,10 @@ class VectorDB(ABC):
     def search_vectors(self, query_vector: np.ndarray, top_k: int) -> List[Dict]:
         pass
 
+    @abstractmethod
+    def index_file(self, file_path:str, file_metadata: dict = None) -> bool:
+        pass
+
 class IRSearchEngine(ABC):
     @abstractmethod
     def index_documents(self, documents: List[Document]):
@@ -37,7 +56,373 @@ class IRSearchEngine(ABC):
     def search(self, query: str, top_k: int) -> List[Dict]:
         pass
 
-class FaissVectorDB(VectorDB):
+
+class PGVectorDB(VectorDB):
+    def __init__(
+        self,
+        connection_string: str,
+        table_name: str = "llama_vector_store",
+        embed_dim: int = 768,
+        recreate_table: bool = False
+    ):
+        """
+        Initialize PGVector store
+        
+        Args:
+            connection_string: Postgres connection string
+                (e.g., "postgresql://user:password@localhost:5432/dbname")
+            table_name: Name of the table to store vectors
+            embed_dim: Dimension of the embeddings
+            recreate_table: Whether to drop and recreate the table
+        """
+        print(f"Using connection string: {connection_string}")
+        self.connection_string = connection_string
+        self.table_name = table_name
+        self.embed_dim = int(embed_dim)
+        self.vector_store = self._init_vector_store(recreate_table)
+        self.doc_store = SimpleDocumentStore()
+        self.index_store = SimpleIndexStore()
+        self._load_stores()
+        self.document_map = {}
+
+    def _init_vector_store(self, recreate_table: bool) -> PGVectorStore:
+
+        self._ensure_vector_extension()
+
+        """Initialize the PGVector store with proper parameters"""
+        if recreate_table:      
+            self._drop_table_if_exists()
+
+        url = make_url(self.connection_string)
+        return PGVectorStore.from_params(
+            database="postgres",  # Fixed database name
+            host=url.host,
+            password=url.password,
+            port=url.port,
+            user=url.username,
+            table_name=self.table_name,
+            embed_dim=self.embed_dim  # Embedding dimension fetched from MongoDB
+        )
+        
+        # Initialize the table if it's new
+        if recreate_table:
+            conn = psycopg2.connect(self.connection_string)
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                cursor.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {self.table_name} (
+                        id UUID PRIMARY KEY,
+                        embedding vector({self.embed_dim}),
+                        text TEXT,
+                        metadata JSONB
+                    )
+                """)
+            conn.close()
+        
+        return store
+
+    def _drop_table_if_exists(self):
+        """Drop the table if it exists"""
+        from sqlalchemy import create_engine
+        
+        engine = create_engine(self.connection_string)
+        with engine.connect() as conn:
+            conn.execute(text(f"DROP TABLE IF EXISTS {self.table_name}"))
+            conn.commit()
+
+    def _ensure_vector_extension(self):
+        """Ensure pgvector extension is enabled"""
+        from sqlalchemy import create_engine
+        
+        engine = create_engine(self.connection_string)
+        with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            conn.commit()
+
+    def index_vectors(self, ids: List[str], vectors: np.ndarray, documents: List[Document]):
+        """Index vectors in PostgreSQL with pgvector"""
+        if len(vectors) == 0 or len(documents) == 0:
+            logger.warning("Empty vectors or documents provided")
+            return
+
+        # Validate inputs
+        if len(ids) != len(vectors) or len(vectors) != len(documents):
+            raise ValueError("IDs, vectors and documents must have same length")
+
+        successful = 0
+        nodes = []
+        for idx, (id_, vector, doc) in enumerate(zip(ids, vectors, documents)):
+            try:
+
+                print(f"doc.text: {doc.text}, type: {type(doc.text)}")  # Check for None or empty string
+                print(f"vector: {id_}, type: {type(vector)}")  # Ensure it's a numpy array
+                print(f"metadata: {doc.metadata}, type: {type(doc.metadata)}")  # Ensure it's a numpy array
+                # Validate ID
+                if not id_ or id_ == 'None' or doc is None:
+                    raise ValueError(f"Invalid document at index {idx}")
+
+                # Validate vector
+                if vector is None:
+                    raise ValueError(f"Null vector at index {idx}")
+                
+                if doc.metadata is None:
+                    raise ValueError(f"No metadata present at index {idx}")
+                    
+                vector = vector.tolist() if isinstance(vector, np.ndarray) else vector
+                if len(vector) != int(self.embed_dim):
+                    raise ValueError(f"Invalid vector dimensions at index {idx}")
+
+                # Validate document
+                if not doc.text or not isinstance(doc.text, str):
+                    raise ValueError(f"Invalid document text at index {idx}")
+
+                # Store document reference
+                self.document_map[id_] = doc
+
+                clean_metadata = {}
+                for k, v in (doc.metadata or {}).items():
+                    if isinstance(v, str) and v.lower() == 'none':
+                        clean_metadata[k] = None
+                    else:
+                        clean_metadata[k] = v
+                
+                # Index with pgvector
+                node = TextNode(
+                    id=id_,
+                    text=doc.text,  # or your document content
+                    embedding=vector,
+                    metadata=clean_metadata
+                )
+                
+                nodes.append(node)
+                successful += 1
+                
+            except Exception as e:
+                logger.error(f"Failed to index document {id_}: {str(e)}")
+                continue
+        
+        try:
+            for n in nodes:
+                assert isinstance(n.embedding, list), f"Embedding not list: {n.embedding}"
+                assert len(n.embedding) == self.embed_dim, f"Invalid embed size: {len(n.embedding)}"
+            ids = self.vector_store.add(nodes=nodes)
+            logger.info(f"Successfully indexed {len(ids)}/{len(documents)} documents")
+        except Exception as e:
+            logger.error(f"Failed to index documents in bulk: {str(e)}")
+
+
+    def search_vectors(self, query_vector: np.ndarray, top_k: int) -> List[Dict]:
+        """Search vectors in PostgreSQL with pgvector
+        
+        Args:
+            query_vector: Embedding vector to search with
+            top_k: Number of results to return
+            
+        Returns:
+            List of dictionaries containing:
+            - score: Similarity score
+            - document: Retrieved document
+            - type: Result type ('vector')
+            - metadata: Document metadata (if available)
+            
+        Raises:
+            ValueError: If input is invalid or search fails
+        """
+        try:
+            # Validate inputs
+            if not hasattr(self, 'vector_store'):
+                raise ValueError("Vector store not initialized")
+                
+            if len(query_vector) == 0:
+                raise ValueError("Empty query vector provided")
+                
+            if top_k <= 0:
+                raise ValueError("top_k must be positive")
+
+            # Convert vector to list if needed
+            query_embedding = query_vector.tolist() if isinstance(query_vector, np.ndarray) else query_vector
+            
+            # Perform similarity search
+            query_results = self.vector_store.query(
+                query='',  # Empty string for pure vector search
+                query_embedding=query_embedding,
+                similarity_top_k=top_k,
+                vector_store_query_mode="default"
+            )
+
+            results = []
+            for node_with_score in query_results.nodes_with_score:
+                try:
+                    doc_id = node_with_score.node.node_id
+                    doc = self.document_map.get(doc_id)
+                    
+                    if not doc:
+                        continue
+                        
+                    results.append({
+                        'score': float(node_with_score.score),
+                        'document': doc,
+                        'type': 'vector',
+                        'metadata': getattr(doc, 'metadata', {}),
+                        'id': doc_id
+                    })
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to process node {doc_id}: {str(e)}")
+                    continue
+
+            logger.info(f"Found {len(results)}/{top_k} vector results")
+            return results
+
+        except Exception as e:
+            logger.error(
+                "Vector search failed",
+                exc_info=True,
+                extra={
+                    'query_vector_shape': query_vector.shape if hasattr(query_vector, 'shape') else None,
+                    'top_k': top_k
+                }
+            )
+            raise ValueError(f"Vector search failed: {str(e)}") from e
+
+    def persist(self):
+        """No-op for PGVector (data is automatically persisted in database)"""
+        pass
+
+    @classmethod
+    def load_from_disk(cls, connection_string: str, table_name: str, embed_dim: int = 1024):
+        """Load existing PGVector store"""
+        return cls(
+            connection_string=connection_string,
+            table_name=table_name,
+            embed_dim=embed_dim,
+            recreate_table=False
+        )
+
+    def get_document_by_id(self, doc_id: str) -> Optional[Document]:
+        """Retrieve document by its ID"""
+        return self.document_map.get(doc_id)
+    
+    def index_file(self, file_path: str, file_metadata: dict = None) -> bool:
+        logger.info(f"Parsing, embedding, and adding file to vector store: {file_path}")
+
+        document, file_extension = self.load_document(file_path)
+        
+        # Set custom doc_id for all file types, and handle page_label preservation for PDFs
+        file_name = os.path.basename(file_path)
+        custom_doc_id = f"{file_name}_part_0" 
+        page_labels = {}
+        for idx, doc in enumerate(document):
+            if (file_extension == 'pdf') and ('page_label' in doc.metadata):
+                page_labels[idx] = doc.metadata['page_label']
+            doc.doc_id = custom_doc_id
+
+        try:
+            chunk_size=512
+            chunk_overlap = 20
+            parser = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+            nodes = parser.get_nodes_from_documents(document)
+            logger.info(f"Number of nodes after parsing: {len(nodes)}")
+
+            # Update nodes with hsimetadata and preserved page labels (only for PDFs)
+            for idx, node in enumerate(nodes):
+                if (file_extension == 'pdf') and (idx in page_labels):
+                    node.metadata['page_label'] = page_labels[idx]
+
+            if not self.doc_store.get_ref_doc_info(document[0].get_doc_id()):
+                storage_context = self.get_storage_context()
+
+                # **Load existing index or create a new one**
+                embedding_model = get_embedding_model()
+                index_id = self.get_existing_index_id()
+                if index_id:
+                    index = load_index_from_storage(storage_context=storage_context,
+                                                    embed_model=embedding_model,
+                                                    index_id=index_id, 
+                                                    store_nodes_override=True)
+                    logger.info(f"Loaded existing index with ID: {index_id}")
+                else:
+                    # Create a new index if no index exists
+                    logger.info("Creating new index")
+                    index = VectorStoreIndex([], 
+                                             storage_context=storage_context, 
+                                             embed_model=embedding_model,
+                                             store_nodes_override=True)
+                    logger.info("Created a new index")
+                
+                # Add nodes to the existing or new index
+                index.insert_nodes(nodes)
+                logger.info(f"Inserted {len(nodes)} nodes into index {index.index_id}")
+                os.remove(file_path)
+                self.persist()
+                return True
+        except Exception as e:
+            logger.error(f"Error during document indexing or embedding process: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Failed to index or embed document: {e}")
+        
+        logger.warning(f"Failed to create index for file: {file_path} as File is already indexed.")
+        return False
+    
+    def load_document(self, file_path: str):
+        file_extension = file_path.split('.')[-1].lower()
+        try:
+            if file_extension in ['pdf', 'docx']:
+                document = SimpleDirectoryReader(input_files=[file_path], filename_as_id=True).load_data()
+            else:
+                logger.error(f"Unsupported file type: {file_extension}")
+                raise ValueError(f"Unsupported file type: {file_extension}")
+        except Exception as e:
+            logger.error(f"Error processing file: {file_path}. Error: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Failed to load document for indexing: {str(e)}")
+        return document, file_extension
+    
+    def get_storage_context(self):
+        try:
+            storage_context = StorageContext.from_defaults(
+                vector_store=self.vector_store,
+                docstore=self.doc_store,
+                index_store=self.index_store
+            )
+            return storage_context
+        except Exception as e:
+            logger.error(f"Error creating storage context: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Failed to create storage context: {str(e)}")
+        
+    def get_existing_index_id(self) -> Optional[str]:
+        try:
+            # Fetch all index structures from the MongoDBIndexStore
+            index_structs = self.index_store.index_structs()
+
+            # Check if there are any indexes present
+            if index_structs:
+                index_id = index_structs[0].index_id  # Retrieve the first index_id 
+                logger.info(f"Found existing index with ID: {index_id}")
+                return index_id
+            else:
+                logger.warning("No existing index found in Index Store.")
+            return None
+        except Exception as e:
+            logger.error(f"Error retrieving existing index ID from Index Store: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to retrieve index ID from Index Store: {e}")
+        
+    def _load_stores(self):
+        """Load stores from files if they exist, otherwise keep empty stores"""
+        docstore_path = os.path.join(STORAGE_DIR, "docstore.json")
+        index_store_path = os.path.join(STORAGE_DIR, "index_store.json")
+        
+        if os.path.exists(docstore_path):
+            self.doc_store = SimpleDocumentStore.from_persist_path(docstore_path)
+        
+        if os.path.exists(index_store_path):
+            self.index_store = SimpleIndexStore.from_persist_path(index_store_path)
+    
+    def persist(self):
+        """Save both stores to disk"""
+        self.doc_store.persist(os.path.join(STORAGE_DIR, "docstore.json"))
+        self.index_store.persist(os.path.join(STORAGE_DIR, "index_store.json"))
+    
+
+""" class FaissVectorDB(VectorDB):
     def __init__(self, dimension: int = 1024, persist_file_path: str = VECTOR_STORE_PATH):
         self.dimension = dimension
         self.index = None
@@ -48,12 +433,10 @@ class FaissVectorDB(VectorDB):
         self._initialize_faiss_index()
     
     def _initialize_faiss_index(self):
-        """Initialize or load FAISS index"""
         if self.index is None:
             self.index = faiss.IndexFlatIP(self.dimension)
     
     def _normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
-        """Normalize vectors for cosine similarity"""
         if len(vectors) == 0:
             return vectors
         if vectors.ndim == 1:
@@ -62,12 +445,10 @@ class FaissVectorDB(VectorDB):
         return vectors
     
     def _validate_index(self):
-        """Ensure index is ready for operations"""
         if self.index is None:
             raise ValueError("FAISS index not initialized")
     
     def index_vectors(self, ids: List[str], vectors: np.ndarray, documents: List[Document]):
-        """Index vectors with FAISS"""
         if len(vectors) == 0 or len(documents) == 0:
             print("No vectors or documents to index")
             return
@@ -84,7 +465,6 @@ class FaissVectorDB(VectorDB):
         self.documents.extend(documents)
     
     def search_vectors(self, query_vector: np.ndarray, top_k: int) -> List[Dict]:
-        """Search FAISS index"""
         self._validate_index()
         print(f"Index total vectors: {self.index.ntotal}")
         print(f"Query vector shape: {query_vector.shape}")
@@ -116,8 +496,6 @@ class FaissVectorDB(VectorDB):
 
     
     def persist(self):
-        """Persist FAISS index to disk"""
-        
         self._validate_index()
         faiss.write_index(self.index, self.persist_file_path)
 
@@ -127,7 +505,6 @@ class FaissVectorDB(VectorDB):
     
     @classmethod
     def load_from_disk(cls, file_path: str, dimension: int = 1024):
-        """Load FAISS index from disk"""
         instance = cls(dimension)
         instance.index = faiss.read_index(file_path)
         docs_path = file_path + ".docs"
@@ -142,9 +519,8 @@ class FaissVectorDB(VectorDB):
 
     
     def get_document_by_id(self, doc_id: str) -> Optional[Document]:
-        """Retrieve document by its ID"""
         return self.document_map.get(doc_id)
-
+ """
 class BM25TFIDFEngine(IRSearchEngine):
     def __init__(self, persist_dir: str = BMI25_STORE_PATH):
         self.bm25 = None

@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api import ingest, query, evaluate, ground_truth
 import os
+import phoenix as px
+px.launch_app()
+#http://localhost:6006
 
 os.environ["HF_HUB_DISABLE_SSL_VERIFICATION"] = "1"
 

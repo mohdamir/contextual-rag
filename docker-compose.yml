@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  frontend:
+    container_name: contextual-rag-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: contextual-rag-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - app_data:/workspace/backend/app/data
+      - rag_uploads:/workspace/uploads  # For RAG file uploads
+      - ./backend:/workspace/backend  # Dev mount for backend
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - POSTGRES_URL=postgresql://vectoruser:vectorpass@postgres:5432/vectordb
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ollama-net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]  # Better endpoint
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s  # Extra time for initial startup
+    restart: unless-stopped
+    networks:
+      - ollama-net
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_DB: vectordb
+      POSTGRES_USER: vectoruser
+      POSTGRES_PASSWORD: vectorpass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vectoruser -d vectordb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ollama-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+volumes:
+  app_data:
+  ollama_data:
+  rag_uploads:
+  postgres_data:
+
+networks:
+  ollama-net:

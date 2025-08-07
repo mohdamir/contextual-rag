@@ -1,16 +1,22 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from llama_index.core import SimpleDirectoryReader
 from app.core.utils import save_uploaded_file
-from app.core.vectordb import FaissVectorDB, BM25TFIDFEngine
+from app.core.vectordb import PGVectorDB, BM25TFIDFEngine
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.chunker import get_chunker_from_env, PDFChunkerBase
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
+POSTGRES_URL = os.getenv('DATABASE_URL')
+CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
 
 router = APIRouter()
+
 DOCUMENTS_DIR = "./data/documents"
 
 def get_hybrid_retriever() -> HybridRetrievalSystem:
-    vector_db = FaissVectorDB(dimension=1024)
+    vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=True)
     ir_engine = BM25TFIDFEngine()
     return HybridRetrievalSystem(
         vector_db=vector_db,
@@ -36,7 +42,8 @@ async def ingest_document(file: UploadFile = File(...),
         for doc in documents:
             doc.metadata["filename"] = file.filename
 
-        retriever.index_documents(documents)
+        retriever.index_file(file_path)
+        #retriever.index_documents(documents)
         
         return {
             "status": "success",

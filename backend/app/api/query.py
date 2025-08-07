@@ -2,19 +2,21 @@ import os
 import time
 from fastapi import APIRouter, Depends
 from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
-from app.core.vectordb import FaissVectorDB, BM25TFIDFEngine, VECTOR_STORE_PATH, BMI25_STORE_PATH, DIMENSIONS
+from app.core.vectordb import BM25TFIDFEngine, BMI25_STORE_PATH, PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.llms import llm
 from typing import List, Dict
-from llama_index.llms.openai_like import OpenAILike
 from dotenv import load_dotenv
 
 load_dotenv()
 
+POSTGRES_URL = os.getenv("DATABASE_URL")
+CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
+
 router = APIRouter()
 
 def get_hybrid_retriever() -> HybridRetrievalSystem:
-    vector_db = FaissVectorDB.load_from_disk(file_path=VECTOR_STORE_PATH, dimension=DIMENSIONS)
+    vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=False)
     ir_engine = BM25TFIDFEngine.load_from_disk(persist_dir=BMI25_STORE_PATH)
     return HybridRetrievalSystem(
         vector_db=vector_db,
