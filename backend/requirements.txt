@@ -43,9 +43,11 @@ llama-index-embeddings-ollama
 arize-phoenix
 arize-phoenix-otel
 openinference-instrumentation-llama_index
+openinference-instrumentation-crewai
 llama-index-callbacks-arize-phoenix
 
 # crewAI and related
 crewai==0.100.0
 ragas
+litellm
 

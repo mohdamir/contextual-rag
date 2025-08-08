@@ -7,6 +7,10 @@ import httpx
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.core.llms import ChatMessage
+from litellm import completion
+from crewai import LLM
+import json
+import requests
 
 # Configure logging
 logger = getLogger(__name__)
@@ -53,11 +57,11 @@ def get_llm() -> Ollama:
         request_timeout=60.0
     )
 
-from typing import List, Dict
-
-import json
-import requests
-from typing import Optional, Dict, Any
+def get_litellm_ollama():
+    return LLM(
+        model='ollama/' + str(os.getenv("LLM_MODEL", "llama3")),
+        base_url=ollama_service.base_url
+    )
 
 def query_ollama(
     prompt: str,

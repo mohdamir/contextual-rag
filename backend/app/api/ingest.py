@@ -27,19 +27,28 @@ router = APIRouter()
 DOCUMENTS_DIR = "./data/documents"
 
 def get_hybrid_retriever() -> HybridRetrievalSystem:
-    vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=True)
+    vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=False)
     ir_engine = BM25TFIDFEngine()
     return HybridRetrievalSystem(
         vector_db=vector_db,
         ir_engine=ir_engine
     )
 
+def check_file_exists(filename: str, directory: str) -> bool:
+    file_path = os.path.join(directory, filename)
+    return os.path.exists(file_path)
+
 @router.post("/")
 async def ingest_document(file: UploadFile = File(...), 
     retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever),
     chunker:PDFChunkerBase = Depends(get_chunker_from_env)):
     try:
-        # Save uploaded file
+        if check_file_exists(file.filename, DOCUMENTS_DIR):
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{file.filename}' already exists."
+            )
+    
         file_path = save_uploaded_file(file, DOCUMENTS_DIR)
         if not file_path:
             raise HTTPException(
@@ -47,14 +56,12 @@ async def ingest_document(file: UploadFile = File(...),
                 detail="Failed to save uploaded file"
             )
         
-        documents = chunker.parse(file_path)
+        documents = chunker.get_documents(file_path=file_path)
+        nodes = chunker.parse(file_path)
+        for node in nodes:
+            node.metadata["filename"] = file.filename
         
-        # Add filename to metadata
-        for doc in documents:
-            doc.metadata["filename"] = file.filename
-
-        retriever.index_file(file_path)
-        #retriever.index_documents(documents)
+        retriever.index_nodes(documents=documents, nodes=nodes)
         
         return {
             "status": "success",

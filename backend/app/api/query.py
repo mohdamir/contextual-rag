@@ -1,13 +1,15 @@
 import os
 import time
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
 from app.core.vectordb import BM25TFIDFEngine, BMI25_STORE_PATH, PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.llms import llm, query_ollama
+from app.services.crew_service import CrewService, CrewAIConfig
 from typing import List, Dict
 
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from openinference.instrumentation.crewai import CrewAIInstrumentor 
 from phoenix.otel import register
 
 from dotenv import load_dotenv
@@ -21,11 +23,15 @@ tracer_provider = register(
     auto_instrument=True,
 )
 LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+CrewAIInstrumentor().instrument(tracer_provider=tracer_provider)
 
 POSTGRES_URL = os.getenv("DATABASE_URL")
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
 
 router = APIRouter()
+
+crew_service = CrewService(config=CrewAIConfig(verbose=True, max_iter=1, trace_provider=tracer_provider))
+
 
 def get_hybrid_retriever() -> HybridRetrievalSystem:
     vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=False)
@@ -108,8 +114,13 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
 @router.post("/", response_model=QueryResponse)
 async def query_documents(request: QueryRequest, retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever)):
 
-    results = retriever.retrieve(request.query, top_k=request.top_k, fusion_method="rrf")
-    print(f"Retrieved {len(results)} documents for query: {request.query}")
+    try:
+        optimized = crew_service.create_prompt_enhancer_crew(request.query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    results = retriever.retrieve(optimized, top_k=request.top_k, fusion_method="rrf")
+    print(f"Retrieved {len(results)} documents for query: {optimized}")
     print (f"Results: {results}")
     if not results:
         return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)

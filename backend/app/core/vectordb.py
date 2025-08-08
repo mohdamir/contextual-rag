@@ -3,7 +3,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 from llama_index.core import VectorStoreIndex, StorageContext, SimpleDirectoryReader, Document
-from llama_index.core.schema import Document, TextNode, NodeWithScore
+from llama_index.core.schema import Document, TextNode, NodeWithScore, BaseNode
 from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.storage.docstore import SimpleDocumentStore
@@ -39,6 +39,9 @@ os.makedirs(STORAGE_DIR, exist_ok=True)
 class VectorDB(ABC):
     @abstractmethod
     def index_vectors(self, ids: List[str], vectors: np.ndarray, documents: List[Document]):
+        pass
+
+    def index_nodes(self, docuemnts: List[Document], nodes: List[BaseNode]) -> bool:
         pass
     
     @abstractmethod
@@ -292,6 +295,51 @@ class PGVectorDB(VectorDB):
         """Retrieve document by its ID"""
         return self.document_map.get(doc_id)
     
+    def index_nodes(self, documents: List[Document], nodes: List[BaseNode]) -> bool:
+        page_labels = {}
+        for idx, doc in enumerate(documents):
+            if ('page_label' in doc.metadata):
+                page_labels[idx] = doc.metadata['page_label']
+
+        try:
+            logger.info(f"Number of nodes  {len(nodes)}")
+            for idx, node in enumerate(nodes):
+                if (idx in page_labels):
+                    node.metadata['page_label'] = page_labels[idx]
+
+            if not self.doc_store.get_ref_doc_info(documents[0].get_doc_id()):
+                storage_context = self.get_storage_context()
+
+                # **Load existing index or create a new one**
+                embedding_model = get_embedding_model()
+                index_id = self.get_existing_index_id()
+                if index_id:
+                    index = load_index_from_storage(storage_context=storage_context,
+                                                    embed_model=embedding_model,
+                                                    index_id=index_id, 
+                                                    store_nodes_override=True)
+                    logger.info(f"Loaded existing index with ID: {index_id}")
+                else:
+                    # Create a new index if no index exists
+                    logger.info("Creating new index")
+                    index = VectorStoreIndex([], 
+                                             storage_context=storage_context, 
+                                             embed_model=embedding_model,
+                                             store_nodes_override=True)
+                    logger.info("Created a new index")
+                
+                # Add nodes to the existing or new index
+                index.insert_nodes(nodes)
+                logger.info(f"Inserted {len(nodes)} nodes into index {index.index_id}")
+                storage_context.persist(persist_dir="./storage")
+                return True
+        except Exception as e:
+            logger.error(f"Error during document indexing or embedding process: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Failed to index or embed document: {e}")
+        
+        logger.warning(f"Failed to create index.")
+        return False
+    
     def index_file(self, file_path: str, file_metadata: dict = None) -> bool:
         logger.info(f"Parsing, embedding, and adding file to vector store: {file_path}")
 
@@ -401,6 +449,11 @@ class PGVectorDB(VectorDB):
         
         if os.path.exists(index_store_path):
             self.index_store = SimpleIndexStore.from_persist_path(index_store_path)
+
+    def persist(self):
+        pass
+
+
 
     def retrieve_from_index(self, query:str, top_k: int) -> List[Dict]:
         logger.info(f"Retrieving data for query: {query}")
