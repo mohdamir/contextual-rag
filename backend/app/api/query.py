@@ -14,12 +14,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-try:
-    tracer_provider = register()
-    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
-except ImportError:
-    # Arize not installed — ignore and continue
-    pass
+os.environ.pop("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)  # remove manual override
+os.environ.pop("OTEL_EXPORTER_OTLP_PROTOCOL", None)         # use default (gRPC)
+tracer_provider = register(
+    project_name="Contextual-RAG",
+    auto_instrument=True,
+)
+LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
 POSTGRES_URL = os.getenv("DATABASE_URL")
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
