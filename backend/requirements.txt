@@ -12,32 +12,34 @@ pydantic[email]==2.8.2
 psycopg2-binary==2.9.9
 pgvector==0.2.5
 sqlalchemy==2.0.29
+alembic==1.13.1
+altair==5.2.0
+
+# Docling and core dependencies (fully pinned)
+docling==2.43.0            # Latest stable as of Jul 28, 2025 :contentReference[oaicite:0]{index=0}
+numpy<2.0.0,>=1.24.4       # Matches docling’s requirements on non-mac Intel ARM systems :contentReference[oaicite:1]{index=1}
+aiohttp==3.12.15
+accelerate==1.9.0
+strawberry-graphql==0.270.1
+python-dotenv==1.0.0
+pydantic-core==2.20.1
+typing-extensions==4.11.0
 
 # Core AI/ML
-torch==2.7.0
-scikit-learn==1.4.1.post1
 sentence-transformers==2.7.0
 rank-bm25==0.2.2
-faiss-cpu==1.7.4
 
 # LlamaIndex ecosystem
-llama-index-core==0.10.20  # Core with broad Python 3.8-3.11 support :cite[2]
-llama-index==0.10.20      # Main package compatible with core 0.10.x
-llama-index-cli==0.1.9   # CLI tools for older versions
-llama-index-llms-ollama==0.1.4  # Last stable Ollama integration for v0.10.x
+llama-index-core==0.10.20
+llama-index==0.10.20
+llama-index-cli==0.1.9
+llama-index-llms-ollama==0.1.4
 llama-index-embeddings-ollama==0.1.2
 llama-index-vector-stores-postgres==0.1.9
 llama-index-readers-file==0.1.4
 ollama==0.2.1
-anthropic==0.25.0
 
-# Optional/Utilities
-streamlit==1.31.1
-loguru==0.7.2
-PyJWT==2.8.0
-PyMuPDF==1.25.5
-
-#crewAI
+# crewAI and related
 crewai==0.28.0
-typing-extensions==4.11.0
-arize-phoenix
+arize-phoenix==11.20.0
+

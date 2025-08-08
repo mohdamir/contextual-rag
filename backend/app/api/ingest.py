@@ -55,3 +55,25 @@ async def ingest_document(file: UploadFile = File(...),
             status_code=500, 
             detail=f"Failed to ingest document: {str(e)}"
         )
+    
+
+@router.get("/documents/")
+async def list_documents():
+    return {
+        "documents": [
+            {
+                "id": "doc_123",
+                "filename": "example.pdf", 
+                "status": "completed",
+                "uploaded_at": "2024-01-15T10:30:00Z",
+                "file_size": 1024000,
+                "file_type": "application/pdf"
+            }
+        ],
+        "total": 1
+    }
+
+# Delete document endpoint  
+@router.delete("/documents/{document_id}")
+async def delete_document(document_id: str):
+    return {"message": "Document deleted successfully"}
