@@ -50,7 +50,7 @@ class CrewService:
             )
 
             crew = Crew(
-                agents=[ptimizer],
+                agents=[optimizer],
                 tasks=[optimization_task],
                 verbose=self.config.verbose,
                 max_iter=self.config.max_iter,

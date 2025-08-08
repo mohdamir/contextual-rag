@@ -90,7 +90,7 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     )
 
     # Calling LLM with the constructed prompt
-    response = query_ollama(prompt=prompt, system_prompt=system_prompt)
+    response = query_ollama(prompt=prompt, system_prompt=system_prompt, model="llama3.2:3b")
     response_text = str(response)
 
     # Prepare Sources
@@ -118,11 +118,20 @@ async def query_documents(request: QueryRequest, retriever: HybridRetrievalSyste
         optimized = crew_service.create_prompt_enhancer_crew(request.query)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    print(f"Optimized Query: {optimized}")
 
-    results = retriever.retrieve(optimized, top_k=request.top_k, fusion_method="rrf")
-    print(f"Retrieved {len(results)} documents for query: {optimized}")
-    print (f"Results: {results}")
-    if not results:
+    top_k_before_reranking = 2 * request.top_k
+    results = retriever.retrieve(optimized, top_k=top_k_before_reranking, fusion_method="rrf")
+    print(f"Retrieved {len(results)} unranked documents")
+
+    re_ranked_results = retriever.rerank_and_score_documents(results)
+    top_scored_results = sorted(re_ranked_results, key=lambda x: x['rerank_score'], reverse=True)[:request.top_k]
+
+
+    print(f"Retrieved {len(top_scored_results)} documents")
+    print (f"Results: {top_scored_results}")
+    if not top_scored_results:
         return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)
 
-    return perform_query(request, results, llm)
+    return perform_query(request, top_scored_results, llm)

@@ -1,0 +1,3 @@
+FROM ghcr.io/open-webui/open-webui:main
+COPY ./pipelines /app/pipelines
+RUN mkdir -p /app/uploads && chmod -R 777 /app/uploads

@@ -12,4 +12,5 @@ COPY backend .
 RUN mkdir -p data/{bm25_index_store,documents,faiss_vector_store,ground_truth}
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 6006
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "asyncio"]

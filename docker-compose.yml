@@ -14,6 +14,13 @@ services:
       - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
+    networks:
+      - crag-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
 
   backend:
     build:
@@ -22,6 +29,7 @@ services:
     container_name: contextual-rag-backend
     ports:
       - "8000:8000"
+      - "6006:6006"
     volumes:
       - app_data:/workspace/backend/app/data
       - rag_uploads:/workspace/uploads  # For RAG file uploads
@@ -36,11 +44,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - ollama-net
+      - crag-net
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 2G
+          cpus: '1.0'
+  
   ollama:
     build:
       context: .
@@ -58,11 +68,12 @@ services:
       start_period: 30s  # Extra time for initial startup
     restart: unless-stopped
     networks:
-      - ollama-net
+      - crag-net
     deploy:
       resources:
         limits:
           memory: 12G
+          cpus: '4.0' 
 
   postgres:
     build:
@@ -85,17 +96,56 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - ollama-net
+      - crag-net
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 4G
+          cpus: '2.0'
+  
+  open-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile.webui  # Your custom WebUI Dockerfile
+    container_name: open-webui
+    ports:
+      - "5000:8080"
+    volumes:
+      - openwebui_uploads:/app/uploads  # For RAG file uploads
+    environment:
+      OPENAI_API_BASE: "http://open-webui-pipelines:9099"
+      OPENAI_API_KEY: "0p3n-w3bu!"
+      OPENAI_API_TYPE: "openai"
+    depends_on:
+      - pipelines
+    restart: unless-stopped
+    networks:
+      - crag-net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:latest
+    container_name: open-webui-pipelines
+    volumes:
+      - ./pipelines:/app/pipelines   # Mount your pipeline code here
+    ports:
+      - "9099:9099"
+    environment:
+      - PIPELINES_API_KEY=0p3n-w3bu!
+    networks:
+      - crag-net
 
 volumes:
   app_data:
   ollama_data:
   rag_uploads:
   postgres_data:
+  openwebui_uploads:
 
 networks:
-  ollama-net:
+  crag-net:
+    driver: bridge

@@ -1,12 +1,14 @@
 
 import os
 from app.core.vectordb import VectorDB, IRSearchEngine
-from app.core.llms import embedding_model
+from app.core.llms import query_ollama
 from typing import List, Dict
 from llama_index.core import Document
 from llama_index.core.schema import BaseNode
 from dotenv import load_dotenv
 import numpy as np
+import json
+
 load_dotenv()
 
 class HybridRetrievalSystem:
@@ -39,16 +41,12 @@ class HybridRetrievalSystem:
         vector_weight: float = 0.5
     ) -> List[Dict]:
         """Retrieve documents using hybrid approach"""
-        # Vector search
-        #query_embedding = embedding_model.get_text_embedding(query)
-        #embeddings_np = np.array(query_embedding).astype('float32')
-        #vector_results = self.vector_db.search_vectors(embeddings_np, top_k)
         vector_results =self.vector_db.retrieve_from_index(query, top_k)
-        print(f"Vector search results: {vector_results}")
+        print(f"Vector search results: {len(vector_results)}")
         
         # IR search
         ir_results = self.ir_engine.search(query, top_k)
-        print(f"IR search results: {ir_results}")
+        print(f"IR search results: {len(ir_results)}")
         
         # Fuse results
         if fusion_method == "rrf":
@@ -159,3 +157,45 @@ class HybridRetrievalSystem:
                 'ir_score': r['ir_score']
             }
         } for r in sorted_results]
+
+
+    def rerank_and_score_documents(query: str, docs: list) -> list:
+        system_prompt = (
+            "You are an expert information retrieval assistant. "
+            "Given a query and a list of passages, rank each passage's relevance to the query "
+            "on a scale from 1.0 (lowest) to 10.0 (highest). "
+            "Return a JSON array of numeric scores corresponding to the order of passages."
+        )
+
+        # Construct user prompt with query and passages (truncated to fit context)
+        prompt = f"Rank the relevance of the following passages to the query below by returning a JSON array of numeric scores from 1.0 (lowest relevance) to 10.0 (highest relevance).\n\nQuery: \"{query}\"\nPassages:\n"
+        for i, doc_dict in enumerate(docs, 1):
+            doc_text = doc_dict['document'].text
+            snippet = doc_text.replace("\n", " ").strip()[:500]  # Take snippet (~500 chars)
+            prompt += f"{i}. {snippet}\n"
+        prompt += "\nJSON scores array:"
+
+        response = query_ollama(prompt=prompt, system_prompt=system_prompt)
+        try:
+            scores = json.loads(response)
+            if not isinstance(scores, list) or len(scores) != len(docs):
+                raise ValueError("Unexpected scores format or length")
+        except Exception as e:
+            print(f"Warning: Failed to parse Llama3 rerank scores from Ollama: {e}")
+            scores = [5.0] * len(docs)  # fallback neutral score for all
+
+        updated_docs = []
+        for doc_dict, score in zip(docs, scores):
+            doc = doc_dict['document']
+            existing_meta = dict(doc.metadata) if doc.metadata else {}
+            existing_meta['rerank_score'] = float(score)
+
+            updated_doc = Document(text=doc.text, metadata=existing_meta, doc_id=doc.id_)
+
+            # Copy original dict and replace 'document' and add top-level 'rerank_score'
+            updated_doc_dict = dict(doc_dict)
+            updated_doc_dict['document'] = updated_doc
+            updated_doc_dict['rerank_score'] = float(score)
+            updated_docs.append(updated_doc_dict)
+
+        return updated_docs

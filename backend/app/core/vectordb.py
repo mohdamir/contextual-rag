@@ -453,8 +453,6 @@ class PGVectorDB(VectorDB):
     def persist(self):
         pass
 
-
-
     def retrieve_from_index(self, query:str, top_k: int) -> List[Dict]:
         logger.info(f"Retrieving data for query: {query}")
         logger.info(f"Docstore contains {len(self.doc_store.docs)} documents")

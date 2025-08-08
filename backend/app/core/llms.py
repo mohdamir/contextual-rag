@@ -21,7 +21,7 @@ class OllamaService:
     
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
-        self._ensure_ollama_ready()
+        #self._ensure_ollama_ready()
     
     def _ensure_ollama_ready(self, max_retries: int = 5, delay: float = 2.0):
         """Wait for Ollama service to become available"""
@@ -66,7 +66,7 @@ def get_litellm_ollama():
 def query_ollama(
     prompt: str,
     system_prompt: Optional[str] = None,
-    model: str = "llama3",
+    model: str = "llama3.2:3b",
     stream: bool = False
 ) -> str:
     """
