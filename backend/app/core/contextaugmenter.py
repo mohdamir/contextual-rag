@@ -5,7 +5,6 @@ from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
 from llama_index.core.schema import BaseNode
 from app.core.llms import embedding_model
 from dotenv import load_dotenv
-from anthropic import Anthropic
 
 load_dotenv()
 

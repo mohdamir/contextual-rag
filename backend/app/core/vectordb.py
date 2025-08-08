@@ -33,6 +33,7 @@ INDEX_STORE_PATH = os.path.join(STORAGE_DIR, "index_store.json")
 # Create storage directory if it doesn't exist
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
+
 # ====================== Abstract Interfaces ======================
 
 class VectorDB(ABC):
@@ -110,23 +111,6 @@ class PGVectorDB(VectorDB):
             table_name=self.table_name,
             embed_dim=self.embed_dim  # Embedding dimension fetched from MongoDB
         )
-        
-        # Initialize the table if it's new
-        if recreate_table:
-            conn = psycopg2.connect(self.connection_string)
-            conn.autocommit = True
-            with conn.cursor() as cursor:
-                cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {self.table_name} (
-                        id UUID PRIMARY KEY,
-                        embedding vector({self.embed_dim}),
-                        text TEXT,
-                        metadata JSONB
-                    )
-                """)
-            conn.close()
-        
-        return store
 
     def _drop_table_if_exists(self):
         """Drop the table if it exists"""

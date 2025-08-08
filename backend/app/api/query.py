@@ -6,9 +6,20 @@ from app.core.vectordb import BM25TFIDFEngine, BMI25_STORE_PATH, PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.llms import llm, query_ollama
 from typing import List, Dict
+
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from phoenix.otel import register
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
+try:
+    tracer_provider = register()
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+except ImportError:
+    # Arize not installed — ignore and continue
+    pass
 
 POSTGRES_URL = os.getenv("DATABASE_URL")
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))

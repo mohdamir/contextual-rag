@@ -3,43 +3,49 @@ uvicorn==0.27.1
 fastapi==0.110.0
 dynaconf==3.2.6
 jinja2==3.1.4
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.9
-pydantic[email]==2.8.2
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic[email]
 
 # Database (PostgreSQL with pgvector)
-psycopg2-binary==2.9.9
-pgvector==0.2.5
-sqlalchemy==2.0.29
-alembic==1.13.1
-altair==5.2.0
+psycopg2-binary
+pgvector
+sqlalchemy
+alembic
+altair
 
-# Docling and core dependencies (fully pinned)
-docling==2.43.0            # Latest stable as of Jul 28, 2025 :contentReference[oaicite:0]{index=0}
-numpy<2.0.0,>=1.24.4       # Matches docling’s requirements on non-mac Intel ARM systems :contentReference[oaicite:1]{index=1}
-aiohttp==3.12.15
-accelerate==1.9.0
-strawberry-graphql==0.270.1
-python-dotenv==1.0.0
-pydantic-core==2.20.1
-typing-extensions==4.11.0
+docling==2.43.0
+numpy
+aiohttp
+accelerate
+strawberry-graphql
+python-dotenv
+pydantic-core
+typing-extensions
 
 # Core AI/ML
-sentence-transformers==2.7.0
+sentence-transformers
 rank-bm25==0.2.2
 
 # LlamaIndex ecosystem
-llama-index-core==0.10.20
-llama-index==0.10.20
-llama-index-cli==0.1.9
-llama-index-llms-ollama==0.1.4
-llama-index-embeddings-ollama==0.1.2
-llama-index-vector-stores-postgres==0.1.9
-llama-index-readers-file==0.1.4
-ollama==0.2.1
+llama-index-core
+llama-index
+llama-index-cli
+
+llama-index-vector-stores-postgres
+llama-index-readers-file
+
+llama-index-llms-ollama
+llama-index-embeddings-ollama
+
+# Observability
+arize-phoenix
+arize-phoenix-otel
+openinference-instrumentation-llama_index
+llama-index-callbacks-arize-phoenix
 
 # crewAI and related
-crewai==0.28.0
-arize-phoenix==11.20.0
+crewai==0.100.0
+ragas
 
