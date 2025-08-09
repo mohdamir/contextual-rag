@@ -26,7 +26,7 @@ BMI25_STORE_PATH = "./data/bm25_index_store"
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 
 # Define storage paths
-STORAGE_DIR = "storage"
+STORAGE_DIR = "./data/storage"
 DOCSTORE_PATH = os.path.join(STORAGE_DIR, "docstore.json")
 INDEX_STORE_PATH = os.path.join(STORAGE_DIR, "index_store.json")
 
@@ -331,7 +331,7 @@ class PGVectorDB(VectorDB):
                 # Add nodes to the existing or new index
                 index.insert_nodes(nodes)
                 logger.info(f"Inserted {len(nodes)} nodes into index {index.index_id}")
-                storage_context.persist(persist_dir="./storage")
+                storage_context.persist(persist_dir=STORAGE_DIR)
                 return True
         except Exception as e:
             logger.error(f"Error during document indexing or embedding process: {str(e)}", exc_info=True)
@@ -387,7 +387,7 @@ class PGVectorDB(VectorDB):
                 index.insert_nodes(nodes)
                 logger.info(f"Inserted {len(nodes)} nodes into index {index.index_id}")
                 os.remove(file_path)
-                storage_context.persist(persist_dir="./storage")
+                storage_context.persist(persist_dir=STORAGE_DIR)
                 return True
         except Exception as e:
             logger.error(f"Error during document indexing or embedding process: {str(e)}", exc_info=True)

@@ -2,6 +2,11 @@ FROM ollama/ollama
 
 RUN apt-get update && apt-get install -y curl
 
+# Copy your entrypoint and Modelfiles
 COPY ollamaentrypoint.sh /ollamaentrypoint.sh
+#COPY Modelfile.llama3.2-32k /Modelfile.llama3.2-32k
+#COPY Modelfile.qwen3-1.7b-32k /Modelfile.qwen3-1.7b-32k
+
 RUN chmod +x /ollamaentrypoint.sh
+
 ENTRYPOINT ["/ollamaentrypoint.sh"]

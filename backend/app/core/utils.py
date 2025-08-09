@@ -18,6 +18,17 @@ def save_uploaded_file(file, directory: str) -> str:
         shutil.copyfileobj(file.file, buffer)
     return str(file_path)
 
+def delete_file(filename: str, directory: str) -> bool:
+    """
+    Delete a file from the specified directory.
+    Returns True if deleted, False if file not found.
+    """
+    file_path = Path(directory) / filename
+    if file_path.exists():
+        os.remove(file_path)
+        return True
+    return False
+
 def load_ground_truth_files(gt_dir: str) -> list:
     """Load all ground truth files from directory"""
     gt_dir = Path(gt_dir)

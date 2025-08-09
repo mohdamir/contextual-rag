@@ -45,7 +45,6 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     """Core query function used by both API and evaluator"""
     start_time = time.perf_counter()
 
-
     # Building context
     context = ""
     for i, chunk in enumerate(retrieved_chunks):
@@ -90,7 +89,7 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     )
 
     # Calling LLM with the constructed prompt
-    response = query_ollama(prompt=prompt, system_prompt=system_prompt, model="llama3.2:3b")
+    response = query_ollama(prompt=prompt, system_prompt=system_prompt)
     response_text = str(response)
 
     # Prepare Sources
@@ -121,17 +120,25 @@ async def query_documents(request: QueryRequest, retriever: HybridRetrievalSyste
     
     print(f"Optimized Query: {optimized}")
 
-    top_k_before_reranking = 2 * request.top_k
-    results = retriever.retrieve(optimized, top_k=top_k_before_reranking, fusion_method="rrf")
-    print(f"Retrieved {len(results)} unranked documents")
+    try: 
+        top_k_before_reranking = 2 * request.top_k
+        results = retriever.retrieve(optimized, top_k=top_k_before_reranking, fusion_method="rrf")
+        print(f"Retrieved {len(results)} unranked documents")
 
-    re_ranked_results = retriever.rerank_and_score_documents(results)
-    top_scored_results = sorted(re_ranked_results, key=lambda x: x['rerank_score'], reverse=True)[:request.top_k]
+        re_ranked_results = retriever.rerank_and_score_documents(results)
+        top_scored_results = sorted(re_ranked_results, key=lambda x: x['rerank_score'], reverse=True)[:request.top_k]
 
 
-    print(f"Retrieved {len(top_scored_results)} documents")
-    print (f"Results: {top_scored_results}")
-    if not top_scored_results:
+        print(f"Retrieved {len(top_scored_results)} documents")
+        print (f"Results: {top_scored_results}")
+        if len(top_scored_results) < 1:
+            return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)
+        else:
+            return perform_query(request, top_scored_results, llm)
+        
+    except Exception as e:
+        print(f"Failed to get answer of question: {e}")
         return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)
+    
 
-    return perform_query(request, top_scored_results, llm)
+    

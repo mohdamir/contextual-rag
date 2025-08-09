@@ -1,0 +1,2 @@
+FROM clidx/Qwen3-1.7B-Q8_0:think
+PARAMETER num_ctx 32768

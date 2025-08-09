@@ -5,6 +5,7 @@ from app.core.llms import query_ollama
 from typing import List, Dict
 from llama_index.core import Document
 from llama_index.core.schema import BaseNode
+from llama_index.core.postprocessor.llm_rerank import LLMRerank
 from dotenv import load_dotenv
 import numpy as np
 import json
@@ -160,22 +161,30 @@ class HybridRetrievalSystem:
 
 
     def rerank_and_score_documents(query: str, docs: list) -> list:
-        system_prompt = (
-            "You are an expert information retrieval assistant. "
-            "Given a query and a list of passages, rank each passage's relevance to the query "
-            "on a scale from 1.0 (lowest) to 10.0 (highest). "
-            "Return a JSON array of numeric scores corresponding to the order of passages."
-        )
 
         # Construct user prompt with query and passages (truncated to fit context)
-        prompt = f"Rank the relevance of the following passages to the query below by returning a JSON array of numeric scores from 1.0 (lowest relevance) to 10.0 (highest relevance).\n\nQuery: \"{query}\"\nPassages:\n"
-        for i, doc_dict in enumerate(docs, 1):
-            doc_text = doc_dict['document'].text
-            snippet = doc_text.replace("\n", " ").strip()[:500]  # Take snippet (~500 chars)
-            prompt += f"{i}. {snippet}\n"
-        prompt += "\nJSON scores array:"
+        prompt = f"""
+        You are a relevance ranking engine.
 
-        response = query_ollama(prompt=prompt, system_prompt=system_prompt)
+        Given a query and {len(docs)} passages, return a JSON array of exactly {len(docs)} numeric scores
+        in the SAME order as the passages.
+        Each score must be between 1.0 (lowest) and 10.0 (highest).
+        Do not explain your reasoning. 
+        Do not output anything except the JSON array.
+
+        Query: "{query}"
+
+        Passages:
+        """
+
+        for i, doc_dict in enumerate(docs, 1):
+            snippet = doc_dict['document'].text.replace("\n", " ").strip()[:500]
+            prompt += f"{i}. {snippet}\n"
+
+        prompt += f"\nOutput only the JSON array of exactly {len(docs)} scores, like this:\n[9.2, 8.5, 3.1, 7.0]"
+
+        response = query_ollama(prompt=prompt, system_prompt=None)
+        print (response)
         try:
             scores = json.loads(response)
             if not isinstance(scores, list) or len(scores) != len(docs):

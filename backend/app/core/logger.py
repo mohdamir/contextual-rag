@@ -26,7 +26,7 @@ def setup_logger(name: str = "rag_app") -> logging.Logger:
     """Configure and return a logger with both file and console handlers"""
     
     # Create logs directory if not exists
-    logs_dir = Path("logs")
+    logs_dir = Path("./data/logs")
     logs_dir.mkdir(exist_ok=True)
     
     # Base logger configuration

@@ -54,19 +54,22 @@ def get_llm() -> Ollama:
         model=os.getenv("LLM_MODEL", "llama3"),
         base_url=ollama_service.base_url,
         temperature=float(os.getenv("LLM_TEMPERATURE", 0.7)),
-        request_timeout=60.0
+        request_timeout=int(os.getenv("TIMEOUT", 60))
     )
 
 def get_litellm_ollama():
+    model_name = str(os.getenv("MODEL_NAME"))
     return LLM(
-        model='ollama/' + str(os.getenv("LLM_MODEL", "llama3")),
-        base_url=ollama_service.base_url
+        model=model_name,
+        base_url=str(os.getenv("API_BASE")),
+        api_key=str(os.getenv("API_KEY"))
     )
 
 def query_ollama(
     prompt: str,
     system_prompt: Optional[str] = None,
-    model: str = "llama3.2:3b",
+    session_id: Optional[str]=None,
+    model: str = None,
     stream: bool = False
 ) -> str:
     """
@@ -83,22 +86,32 @@ def query_ollama(
         Complete generated response
     """
     base_url = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
+    temperature=float(os.getenv("LLM_TEMPERATURE", 0.5))
+    request_timeout=int(os.getenv("TIMEOUT", 60))
+    if model is None:
+        model = os.getenv("LLM_MODEL", "llama3")
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
     try:
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            "options": {
+                "temperature":temperature
+            }
+        }
+        if session_id:
+            payload["options"]["conversation"] = session_id
+            payload["num_ctx"]= 32768
         response = requests.post(
             f"{base_url}/api/chat",
-            json={
-                "model": model,
-                "messages": messages,
-                "stream": stream,
-                "options": {"temperature": 0.7}
-            },
+            json=payload,
             stream=stream,
-            timeout=60
+            timeout=request_timeout
         )
         response.raise_for_status()
         
@@ -131,7 +144,7 @@ class RobustOllamaEmbedding:
     
     def __init__(self, model_name: str = "nomic-embed-text"):
         self.model_name = model_name
-        self.client = httpx.Client(base_url=ollama_service.base_url, timeout=60.0)
+        self.client = httpx.Client(base_url=ollama_service.base_url, timeout=int(os.getenv("TIMEOUT", 60)))
     
     def get_text_embedding(self, text: str, max_retries: int = 3) -> List[float]:
         """Get embedding with retry logic"""
