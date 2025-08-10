@@ -27,10 +27,7 @@ services:
       - "6006:6006"
     volumes:
       - app_data:/workspace/backend/app/data
-      - ./backend:/workspace/backend  # Dev mount for backend
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - POSTGRES_URL=postgresql://vectoruser:vectorpass@postgres:5432/vectordb
+      - ./backend:/workspace/backend
     depends_on:
       ollama:
         condition: service_healthy
@@ -85,12 +82,12 @@ services:
   open-webui:
     build:
       context: .
-      dockerfile: Dockerfile.webui  # Your custom WebUI Dockerfile
+      dockerfile: Dockerfile.webui
     container_name: open-webui
     ports:
       - "5000:8080"
     volumes:
-      - openwebui_uploads:/app/uploads  # For RAG file uploads
+      - openwebui_uploads:/app/uploads
     environment:
       OPENAI_API_BASE: "http://open-webui-pipelines:9099"
       OPENAI_API_KEY: "0p3n-w3bu!"
@@ -107,7 +104,7 @@ services:
       dockerfile: Dockerfile.pipelines
     container_name: open-webui-pipelines
     volumes:
-      - ./pipelines:/app/pipelines   # Mount your pipeline code here
+      - ./pipelines:/app/pipelines
     ports:
       - "9099:9099"
     environment:

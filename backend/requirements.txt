@@ -3,51 +3,50 @@ uvicorn==0.27.1
 fastapi==0.110.0
 dynaconf==3.2.6
 jinja2==3.1.4
-python-jose[cryptography]
-passlib[bcrypt]
-python-multipart
-pydantic[email]
+python-jose==3.5.0
+passlib==1.7.4
+python-multipart==0.0.20
+pydantic==2.11.7
 
 # Database (PostgreSQL with pgvector)
-psycopg2-binary
-pgvector
-sqlalchemy
-alembic
-altair
+psycopg2-binary==2.9.10
+pgvector==0.4.1
+SQLAlchemy==2.0.42
+alembic==1.16.4
+altair==5.5.0
 
 docling==2.43.0
-numpy
-aiohttp
-accelerate
+aiohttp==3.12.15
+accelerate==1.10.0
 strawberry-graphql
-python-dotenv
-pydantic-core
-typing-extensions
+python-dotenv==1.1.1
+pydantic_core==2.33.2
+typing_extensions==4.14.1
 
 # Core AI/ML
-sentence-transformers
+sentence-transformers==5.1.0
 rank-bm25==0.2.2
 
 # LlamaIndex ecosystem
-llama-index-core
-llama-index
-llama-index-cli
+llama-index-core==0.13.0
+llama-index==0.13.0
+llama-index-cli==0.5.0
 
-llama-index-vector-stores-postgres
-llama-index-readers-file
+llama-index-vector-stores-postgres==0.6.1
+llama-index-readers-file==0.5.0
 
-llama-index-llms-ollama
-llama-index-embeddings-ollama
+llama-index-llms-ollama==0.7.0
+llama-index-embeddings-ollama==0.7.0
+ollama==0.5.3
 
 # Observability
-arize-phoenix
-arize-phoenix-otel
-openinference-instrumentation-llama_index
-openinference-instrumentation-crewai
-llama-index-callbacks-arize-phoenix
+arize-phoenix==11.21.0
+arize-phoenix-otel==0.12.1
+openinference-instrumentation-crewai==0.1.11
+openinference-instrumentation-llama-index==4.3.4
+llama-index-callbacks-arize-phoenix==0.6.0
 
 # crewAI and related
 crewai==0.100.0
-ragas
-litellm
-
+ragas==0.3.0
+litellm==1.57.4
