@@ -44,24 +44,31 @@ class CrewService:
                 )
             )
 
+            description = f"""
+                Rewrite the original user prompt into two optimized versions:
+
+                1. **retrieval_prompt**: Short, keyword-focused version optimized for semantic search in a vector database. It should contain only the essential concepts, using domain-specific terms.
+                2. **llm_prompt**: Clear and structured version of the original prompt, optimized for input to a language model. It can include clarification and be more natural/verbose.
+
+                ### Example Input
+                **Original Prompt**:
+                Explain the difference between Foreground and Background Intellectual Property in a contract.
+
+                ### Example Output (JSON):
+                {{
+                "retrieval_prompt": "difference between Foreground and Background Intellectual Property in contracts",
+                "llm_prompt": "Explain the difference between Foreground and Background Intellectual Property within a contractual context."
+                }}
+
+                Return your response **only as a JSON object** in this format.
+                Do not include any commentary or explanation.
+
+                Original Prompt: {original_prompt}
+                """
+
 
             optimization_task = Task(
-                description=(
-                    "Rewrite the original user prompt into two optimized versions:\n\n"
-                    "1. **retrieval_prompt**: Short, keyword-focused version optimized for semantic search in a vector database. It should contain only the essential concepts, using domain-specific terms.\n"
-                    "2. **llm_prompt**: Clear and structured version of the original prompt, optimized for input to a language model. It can include clarification and be more natural/verbose.\n\n"
-                    "### Example Input\n"
-                    "**Original Prompt**:\n"
-                    "Explain the difference between Foreground and Background Intellectual Property in a contract.\n\n"
-                    "### Example Output (JSON):\n"
-                    "{\n"
-                    "  \"retrieval_prompt\": \"difference between Foreground and Background Intellectual Property in contracts\",\n"
-                    "  \"llm_prompt\": \"Explain the difference between Foreground and Background Intellectual Property within a contractual context.\"\n"
-                    "}\n\n"
-                    "Return your response **only as a JSON object** in this format.\n"
-                    "Do not include any commentary or explanation.\n\n"
-                    "Original Prompt: {user_input}"
-                ),
+                description=description,
                 agent=optimizer,
                 expected_output="JSON object with retrieval_prompt and llm_prompt.",
                 llm=self.llm

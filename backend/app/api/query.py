@@ -2,7 +2,8 @@ import os
 import time
 from fastapi import APIRouter, Depends, HTTPException
 from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
-from app.core.vectordb import BM25TFIDFEngine, BMI25_STORE_PATH, PGVectorDB
+from app.core.bm25engine import BM25TFIDFEngine, BMI25_STORE_PATH
+from app.core.vectordb import PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.llms import llm, query_ollama
 from app.services.crew_service import CrewService, CrewAIConfig

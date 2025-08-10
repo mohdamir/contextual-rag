@@ -34,7 +34,7 @@ class PDFChunkerBase(ABC):
         reader = DoclingReader(export_type=DoclingReader.ExportType.MARKDOWN)
         documents = reader.load_data(file_path=file_path)
         for doc in documents:
-            doc.metadata["filename"] = os.path.basename(file_path)
+            doc.metadata["file_name"] = os.path.basename(file_path)
             doc.metadata["file_path"] = file_path
         return documents
 

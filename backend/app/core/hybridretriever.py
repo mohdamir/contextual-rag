@@ -1,6 +1,7 @@
 
 import os
-from app.core.vectordb import VectorDB, IRSearchEngine
+from app.core.vectordb import VectorDB
+from app.core.bm25engine import IRSearchEngine
 from app.core.llms import query_ollama
 from typing import List, Dict
 from llama_index.core import Document
@@ -33,6 +34,9 @@ class HybridRetrievalSystem:
 
     def index_file(self, file_path: str):
         self.vector_db.index_file(file_path)
+
+    def delete_by_filename(self, file_name: str) -> bool:
+        return self.vector_db.delete_by_file_name(file_name=file_name)
 
     def retrieve(
         self,
