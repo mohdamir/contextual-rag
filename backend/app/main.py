@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+
 # Force the default event loop policy (not uvloop) so nest_asyncio can patch it
 try:
     asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
@@ -8,10 +9,13 @@ except Exception:
     pass
 
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .api import ingest, query, evaluate, ground_truth
-import os
+from starlette.middleware.base import BaseHTTPMiddleware
+import json
+import re
 
 import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
@@ -37,6 +41,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+class SanitizeJSONMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("content-type") == "application/json":
+            body_bytes = await request.body()
+            try:
+                body_text = body_bytes.decode("utf-8")
+                # Clean control characters
+                sanitized_text = re.sub(r'[\x00-\x1f\x7f]', ' ', body_text)
+                request._body = sanitized_text.encode("utf-8")
+            except Exception as e:
+                return JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
+        return await call_next(request)
+
+app.add_middleware(SanitizeJSONMiddleware)
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -45,6 +64,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SanitizeJSONMiddleware)
 
 app.include_router(ingest.router, prefix="/ingest", tags=["Ingestion"])
 app.include_router(query.router, prefix="/query", tags=["Query"])

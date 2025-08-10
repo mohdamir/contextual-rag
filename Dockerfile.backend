@@ -9,7 +9,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend .
 
 # Create data directories
-RUN mkdir -p data/{bm25_index_store,documents,faiss_vector_store,ground_truth}
+RUN mkdir -p data/bm25_index_store
+RUN mkdir -p data/documents
+RUN mkdir -p data/faiss_vector_store
+RUN mkdir -p data/ground_truth
+RUN mkdir -p data/logs
+RUN mkdir -p data/storage
 
 EXPOSE 8000
 EXPOSE 6006
