@@ -26,7 +26,7 @@ class AnthropicContextAugmenter:
         self.session_id = None
         self.api_base = str(os.getenv("API_BASE"))
         self.api_key = str(os.getenv("API_KEY"))
-        self.model = str(os.getenv("MODEL_NAME"))
+        self.model = str(os.getenv("ANTHROPIC_MODEL"))
 
     def query_openrouter(self, prompt, system_prompt, session_id=None):
         url = f"{self.api_base}/chat/completions"

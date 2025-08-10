@@ -34,6 +34,8 @@ llama-index-cli==0.5.0
 
 llama-index-vector-stores-postgres==0.6.1
 llama-index-readers-file==0.5.0
+llama-index-readers-docling
+llama-index-node-parser-docling
 
 llama-index-llms-ollama==0.7.0
 llama-index-embeddings-ollama==0.7.0

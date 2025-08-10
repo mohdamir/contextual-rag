@@ -52,18 +52,25 @@ async def ingest_document(file: UploadFile = File(...),
                 )
             
             documents = chunker.get_documents(file_path=file_path)
-            nodes = chunker.parse(file_path)
+            nodes = chunker.parse(documents=documents)
             for node in nodes:
                 node.metadata["filename"] = file.filename
             
             retriever.index_nodes(documents=documents, nodes=nodes)
             
-        return {
-            "status": "success",
-            "filename": file.filename,
-            "documents": len(documents)
-        }
-
+            return {
+                "status": "success",
+                "message": "File ingested successfully",
+                "filename": file.filename,
+                "documents": len(documents)
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "File already present. No need to ingest again.",
+                "filename": file.filename,
+                "documents": 0
+            }
     except Exception as e:
         delete_file(filename=file.filename, directory=DOCUMENTS_DIR)
         raise HTTPException(

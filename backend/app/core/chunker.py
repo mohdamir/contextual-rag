@@ -2,6 +2,9 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict
 from llama_index.core import SimpleDirectoryReader, Document
+from llama_index.readers.docling import DoclingReader
+from llama_index.node_parser.docling import DoclingNodeParser
+from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.core.node_parser import (
     SentenceSplitter, 
     SemanticSplitterNodeParser
@@ -22,13 +25,14 @@ class PDFChunkerBase(ABC):
         self.chunk_overlap = chunk_overlap
     
     @abstractmethod
-    def parse(self, file_path: str) -> List[BaseNode]:
+    def parse(self, documents = List[Document]) -> List[BaseNode]:
         """Parse documents into chunks using specific strategy"""
         pass
     
     def get_documents(self, file_path: str) -> List[Document]:
         """Helper method to load documents from a file path."""
-        documents = SimpleDirectoryReader(input_files=[file_path]).load_data()
+        reader = DoclingReader(export_type=DoclingReader.ExportType.MARKDOWN)
+        documents = reader.load_data(file_path=file_path)
         for doc in documents:
             doc.metadata["filename"] = os.path.basename(file_path)
             doc.metadata["file_path"] = file_path
@@ -36,12 +40,11 @@ class PDFChunkerBase(ABC):
 
 class OverlapChunker(PDFChunkerBase):
     """Fixed-size chunks with configurable overlap."""
-    def parse(self, file_path: str) -> List[BaseNode]:
+    def parse(self, documents = List[Document]) -> List[BaseNode]:
         splitter = SentenceSplitter(
             chunk_size=self.chunk_size,
             chunk_overlap=self.chunk_overlap
         )
-        documents = self.get_documents(file_path)
         nodes = splitter.get_nodes_from_documents(documents)
         return nodes
 
@@ -51,13 +54,12 @@ class SemanticChunker(PDFChunkerBase):
         super().__init__(chunk_size)
         self.breakpoint_threshold = breakpoint_threshold
     
-    def parse(self, file_path: str) -> List[BaseNode]:
+    def parse(self, documents = List[Document]) -> List[BaseNode]:
         splitter = SemanticSplitterNodeParser(
             buffer_size=1,
             breakpoint_percentile_threshold=self.breakpoint_threshold,
             embed_model=embedding_model
         )
-        documents = self.get_documents(file_path)
         nodes = splitter.get_nodes_from_documents(documents)
         return nodes
 
@@ -73,17 +75,26 @@ class AnthropicContextualChunker(PDFChunkerBase):
         self.chunk_overlap = chunk_overlap
         self.augmenter = augmenter or AnthropicContextAugmenter()
     
-    def parse(self, file_path: str) -> List[BaseNode]:
+    def parse(self, documents = List[Document]) -> List[BaseNode]:
         """Parse document with contextual augmentation"""
-        # Load and parse documents hierarchically
-        documents = SimpleDirectoryReader(input_files=[file_path]).load_data()
-        WHOLE_DOCUMENT = documents[0].text
-        node_parser = SentenceSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
-        nodes = node_parser.get_nodes_from_documents(documents, show_progress=False)
-        
-        # Process each chunk with contextual augmentation
-        augmented_nodes = self.augmenter.create_contextual_nodes(nodes, whole_document=WHOLE_DOCUMENT)
-        return augmented_nodes
+        print (f"Parsing {len(documents)} documents")
+        if len(documents) > 0:
+            WHOLE_DOCUMENT = documents[0].text
+            
+            #node_parser = SentenceSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
+            try:
+                node_parser = MarkdownNodeParser(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
+                nodes = node_parser.get_nodes_from_documents(documents)
+                
+                # Process each chunk with contextual augmentation
+                augmented_nodes = self.augmenter.create_contextual_nodes(nodes, whole_document=WHOLE_DOCUMENT)
+                return augmented_nodes
+            except Exception as e:
+                print (f"Exception occured in parsing the document {e}")
+                raise e
+        else:
+            print ("No documents to parse. Please check if file is empty")
+            raise e
 
 
 def get_chunker_from_env() -> PDFChunkerBase:

@@ -26,7 +26,7 @@ services:
       - "8000:8000"
       - "6006:6006"
     volumes:
-      - app_data:/workspace/backend/app/data
+      - app_data:/workspace/backend/data
       - ./backend:/workspace/backend
     depends_on:
       ollama:
