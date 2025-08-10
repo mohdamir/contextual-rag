@@ -30,24 +30,43 @@ class CrewService:
         )
 
     def create_prompt_enhancer_crew(self, original_prompt: str) -> str:
-        """Optimize a given prompt through a 2-agent CrewAI pipeline."""
         if not self.config.enable_prompt_enhancer:
             self.logger.info("Prompt enhancer disabled; returning original prompt.")
             return original_prompt
 
         try:
             optimizer = self._create_agent(
-                role="Prompt Optimizer",
-                goal="Rewrite prompts for maximum clarity and effectiveness",
-                backstory="Specialist in prompt engineering and Wordsmith with deep understanding of LLM capabilities"
+                role="Dual Prompt Optimizer",
+                goal="Rewrite user input for both semantic retrieval and language model processing",
+                backstory=(
+                    "Expert in semantic search and prompt engineering. "
+                    "Knows how to produce both info-dense prompts for retrieval and rich prompts for generation."
+                )
             )
 
+
             optimization_task = Task(
-                description="Rewrite the prompt incorporating all improvements",
+                description=(
+                    "Rewrite the original user prompt into two optimized versions:\n\n"
+                    "1. **retrieval_prompt**: Short, keyword-focused version optimized for semantic search in a vector database. It should contain only the essential concepts, using domain-specific terms.\n"
+                    "2. **llm_prompt**: Clear and structured version of the original prompt, optimized for input to a language model. It can include clarification and be more natural/verbose.\n\n"
+                    "### Example Input\n"
+                    "**Original Prompt**:\n"
+                    "Explain the difference between Foreground and Background Intellectual Property in a contract.\n\n"
+                    "### Example Output (JSON):\n"
+                    "{\n"
+                    "  \"retrieval_prompt\": \"difference between Foreground and Background Intellectual Property in contracts\",\n"
+                    "  \"llm_prompt\": \"Explain the difference between Foreground and Background Intellectual Property within a contractual context.\"\n"
+                    "}\n\n"
+                    "Return your response **only as a JSON object** in this format.\n"
+                    "Do not include any commentary or explanation.\n\n"
+                    "Original Prompt: {user_input}"
+                ),
                 agent=optimizer,
-                expected_output="Final enhanced prompt ready for LLM processing",
+                expected_output="JSON object with retrieval_prompt and llm_prompt.",
                 llm=self.llm
             )
+
 
             crew = Crew(
                 agents=[optimizer],

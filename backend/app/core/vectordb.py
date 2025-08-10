@@ -21,7 +21,7 @@ from pathlib import Path
 from app.core.logger import logger
 import psycopg2
 
-VECTOR_STORE_PATH = "./data/faiss_vector_store/index.faiss"
+
 BMI25_STORE_PATH = "./data/bm25_index_store"
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 
@@ -149,10 +149,6 @@ class PGVectorDB(VectorDB):
         nodes = []
         for idx, (id_, vector, doc) in enumerate(zip(ids, vectors, documents)):
             try:
-
-                print(f"doc.text: {doc.text}, type: {type(doc.text)}")  # Check for None or empty string
-                print(f"vector: {id_}, type: {type(vector)}")  # Ensure it's a numpy array
-                print(f"metadata: {doc.metadata}, type: {type(doc.metadata)}")  # Ensure it's a numpy array
                 # Validate ID
                 if not id_ or id_ == 'None' or doc is None:
                     raise ValueError(f"Invalid document at index {idx}")
@@ -456,7 +452,6 @@ class PGVectorDB(VectorDB):
     def retrieve_from_index(self, query:str, top_k: int) -> List[Dict]:
         logger.info(f"Retrieving data for query: {query}")
         logger.info(f"Docstore contains {len(self.doc_store.docs)} documents")
-        logger.info(f"First 10 doc IDs: {list(self.doc_store.docs.keys())}")
         try:
             embedding_model = get_embedding_model()
             # Re-create the storage context
@@ -487,9 +482,7 @@ class PGVectorDB(VectorDB):
                 # Get document reference
                 doc = None
                 doc = self.doc_store.get_document(node.node_id)
-
-                print (type(doc))
-                
+               
                 # Prepare metadata
                 metadata = {}
                 if hasattr(node, 'metadata'):   
@@ -509,107 +502,7 @@ class PGVectorDB(VectorDB):
         except Exception as e:
             logger.error(f"Error during retrieval process: {e}", exc_info=True)
             raise RuntimeError(f"Failed to retrieve data from index: {e}")
-    
 
-""" class FaissVectorDB(VectorDB):
-    def __init__(self, dimension: int = 1024, persist_file_path: str = VECTOR_STORE_PATH):
-        self.dimension = dimension
-        self.index = None
-        self.documents = []
-        self.document_map = {}
-        self.persist_file_path = persist_file_path
-        os.makedirs(os.path.dirname(self.persist_file_path), exist_ok=True)
-        self._initialize_faiss_index()
-    
-    def _initialize_faiss_index(self):
-        if self.index is None:
-            self.index = faiss.IndexFlatIP(self.dimension)
-    
-    def _normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
-        if len(vectors) == 0:
-            return vectors
-        if vectors.ndim == 1:
-            vectors = vectors.reshape(1, -1)
-        faiss.normalize_L2(vectors)
-        return vectors
-    
-    def _validate_index(self):
-        if self.index is None:
-            raise ValueError("FAISS index not initialized")
-    
-    def index_vectors(self, ids: List[str], vectors: np.ndarray, documents: List[Document]):
-        if len(vectors) == 0 or len(documents) == 0:
-            print("No vectors or documents to index")
-            return
-        
-        self._validate_index()
-        vectors = self._normalize_vectors(vectors)
-        
-        # Add vectors to index
-        self.index.add(vectors)
-        
-        # Store document references
-        for id_, doc in zip(ids, documents):
-            self.document_map[id_] = doc
-        self.documents.extend(documents)
-    
-    def search_vectors(self, query_vector: np.ndarray, top_k: int) -> List[Dict]:
-        self._validate_index()
-        print(f"Index total vectors: {self.index.ntotal}")
-        print(f"Query vector shape: {query_vector.shape}")
-        print(f"Top_k requested: {top_k}")
-
-        query_vector = self._normalize_vectors(query_vector)
-        print(f"Normalized query vector: {query_vector}")
-
-        distances, indices = self.index.search(query_vector, top_k)
-        print(f"FAISS search distances: {distances}")
-        print(f"FAISS search indices: {indices}")
-
-        results = []
-        for i, idx in enumerate(indices[0]):
-            if idx >= 0:
-                try:
-                    doc = self.documents[idx]
-                    results.append({
-                        'score': float(distances[0][i]),
-                        'document': doc,
-                        'type': 'vector'
-                    })
-                except IndexError:
-                    print(f"IndexError: idx={idx}, documents={len(self.documents)}")
-                    continue
-
-        print(f"Results: {results}")
-        return results
-
-    
-    def persist(self):
-        self._validate_index()
-        faiss.write_index(self.index, self.persist_file_path)
-
-        docs_path = self.persist_file_path + ".docs"
-        with open(docs_path, "wb") as f:
-            pickle.dump(self.documents, f)
-    
-    @classmethod
-    def load_from_disk(cls, file_path: str, dimension: int = 1024):
-        instance = cls(dimension)
-        instance.index = faiss.read_index(file_path)
-        docs_path = file_path + ".docs"
-        try:
-            with open(docs_path, "rb") as f:
-                instance.documents = pickle.load(f)
-            instance.document_map = {doc.doc_id: doc for doc in instance.documents}
-        except FileNotFoundError:
-            instance.documents = []
-            instance.document_map = {}
-        return instance
-
-    
-    def get_document_by_id(self, doc_id: str) -> Optional[Document]:
-        return self.document_map.get(doc_id)
- """
 class BM25TFIDFEngine(IRSearchEngine):
     def __init__(self, persist_dir: str = BMI25_STORE_PATH):
         self.bm25 = None

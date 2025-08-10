@@ -49,7 +49,6 @@ class AnthropicContextAugmenter:
         if session_id:
             payload["session_id"] = session_id  # confirm if your OpenRouter endpoint supports sessions this way
 
-        print (payload)
         try:
             response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()

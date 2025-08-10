@@ -7,6 +7,7 @@ from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.llms import llm, query_ollama
 from app.services.crew_service import CrewService, CrewAIConfig
 from typing import List, Dict
+import json
 
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from openinference.instrumentation.crewai import CrewAIInstrumentor 
@@ -41,7 +42,7 @@ def get_hybrid_retriever() -> HybridRetrievalSystem:
         ir_engine=ir_engine
     )
 
-def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> QueryResponse:
+def perform_query(prompt: str, retrieved_chunks: List[Dict]) -> QueryResponse:
     """Core query function used by both API and evaluator"""
     start_time = time.perf_counter()
 
@@ -84,7 +85,7 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
     prompt = (
         f"Use the following context to answer the user's question as accurately as possible.\n\n"
         f"Context:\n{context}\n"
-        f"Question: {request.query}\n"
+        f"Question: {prompt}\n"
         f"Answer:"
     )
 
@@ -113,28 +114,31 @@ def perform_query(request: QueryRequest, retrieved_chunks: List[Dict], llm) -> Q
 @router.post("/", response_model=QueryResponse)
 async def query_documents(request: QueryRequest, retriever: HybridRetrievalSystem = Depends(get_hybrid_retriever)):
 
+    retrieval_prompt = request.query
+    llm_prompt = request.query
     try:
-        optimized = crew_service.create_prompt_enhancer_crew(request.query)
+        response = crew_service.create_prompt_enhancer_crew(request.query)
+        prompt_data = json.loads(response)
+        retrieval_prompt = prompt_data["retrieval_prompt"]
+        llm_prompt = prompt_data["llm_prompt"]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    print(f"Optimized Query: {optimized}")
+        print (f"Prompt enhancement failed {e}")
+
+    print(f"Optimized Query: {llm_prompt}")
 
     try: 
         top_k_before_reranking = 2 * request.top_k
-        results = retriever.retrieve(optimized, top_k=top_k_before_reranking, fusion_method="rrf")
+        results = retriever.retrieve(retrieval_prompt, top_k=top_k_before_reranking, fusion_method="rrf")
         print(f"Retrieved {len(results)} unranked documents")
 
         re_ranked_results = retriever.rerank_and_score_documents(results)
         top_scored_results = sorted(re_ranked_results, key=lambda x: x['rerank_score'], reverse=True)[:request.top_k]
 
-
-        print(f"Retrieved {len(top_scored_results)} documents")
-        print (f"Results: {top_scored_results}")
+        print(f"Retrieved {len(top_scored_results)} re-ranked documents")
         if len(top_scored_results) < 1:
             return QueryResponse(answer="No relevant documents found.", sources=[], latency=0.0)
         else:
-            return perform_query(request, top_scored_results, llm)
+            return perform_query(llm_prompt, top_scored_results)
         
     except Exception as e:
         print(f"Failed to get answer of question: {e}")

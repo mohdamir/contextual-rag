@@ -52,3 +52,4 @@ llama-index-callbacks-arize-phoenix==0.6.0
 crewai==0.100.0
 ragas==0.3.0
 litellm==1.57.4
+faiss-cpu==1.11.0.post1

@@ -184,7 +184,6 @@ class HybridRetrievalSystem:
         prompt += f"\nOutput only the JSON array of exactly {len(docs)} scores, like this:\n[9.2, 8.5, 3.1, 7.0]"
 
         response = query_ollama(prompt=prompt, system_prompt=None)
-        print (response)
         try:
             scores = json.loads(response)
             if not isinstance(scores, list) or len(scores) != len(docs):
