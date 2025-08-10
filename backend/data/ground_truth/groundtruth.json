@@ -1,82 +1,227 @@
 [
   {
-    "question": "What was Apple's total net sales in fiscal year 2024?",
-    "answer": "Apple's total net sales in fiscal year 2024 were $391,035 million.",
-    "context": "Total net sales $ 391,035 2 % $ 383,285 (3)% $ 394,328",
+    "question": "What are the core principles of procurement according to the Abu Dhabi Procurement Standards?",
+    "answer": "The core principles of procurement are: accountability, transparency, fairness, competition, value for money, and sustainability.",
+    "context": "Core Principles of Procurement The core principles of procurement are: accountability, transparency, fairness, competition, value for money, and sustainability.",
+    "page": 13,
+    "span_start": 102,
+    "span_end": 225,
+    "file_name": "Abu Dhabi Procurement Standards.PDF"
+  },
+  {
+    "question": "How is 'Procurement Function' defined in the Abu Dhabi Procurement Standards?",
+    "answer": "The Procurement Function is defined as the department or team responsible for managing the procurement process, including planning, sourcing, and contracting to meet the organization’s requirements.",
+    "context": "Procurement Function The Procurement Function is defined as the department or team responsible for managing the procurement process, including planning, sourcing, and contracting to meet the organization’s requirements.",
+    "page": 16,
+    "span_start": 50,
+    "span_end": 248,
+    "file_name": "Abu Dhabi Procurement Standards.PDF"
+  },
+  {
+    "question": "What does the term 'Procurement Strategy' mean in the Abu Dhabi Procurement Standards?",
+    "answer": "Procurement Strategy refers to the high-level plan developed by an entity to ensure that procurement activities deliver the best possible value in support of its objectives.",
+    "context": "Procurement Strategy Procurement Strategy refers to the high-level plan developed by an entity to ensure that procurement activities deliver the best possible value in support of its objectives.",
+    "page": 18,
+    "span_start": 74,
+    "span_end": 247,
+    "file_name": "Abu Dhabi Procurement Standards.PDF"
+  },
+  {
+    "question": "What is the 'Source to Contract' process in procurement?",
+    "answer": "The Source to Contract process involves identifying the need, developing the procurement strategy, approaching the market, evaluating responses, and awarding a contract to the selected supplier.",
+    "context": "Source to Contract The Source to Contract process involves identifying the need, developing the procurement strategy, approaching the market, evaluating responses, and awarding a contract to the selected supplier.",
+    "page": 22,
+    "span_start": 60,
+    "span_end": 234,
+    "file_name": "Abu Dhabi Procurement Standards.PDF"
+  },
+  {
+    "question": "What is meant by 'Procurement Standards' in the context of Abu Dhabi Government Entities?",
+    "answer": "Procurement Standards refer to the mandatory requirements and guidelines that Abu Dhabi Government Entities must follow to ensure consistent and effective procurement practices.",
+    "context": "Procurement Standards Procurement Standards refer to the mandatory requirements and guidelines that Abu Dhabi Government Entities must follow to ensure consistent and effective procurement practices.",
+    "page": 12,
+    "span_start": 45,
+    "span_end": 230,
+    "file_name": "Abu Dhabi Procurement Standards.PDF"
+  },
+    {
+    "question": "What is the probation period for new employees according to the HR Bylaws?",
+    "answer": "The probation period for new employees is six months from the date of joining, during which either party may terminate the contract with written notice.",
+    "context": "Probation Period: The probation period for new employees is six months from the date of joining, during which either party may terminate the contract with written notice.",
+    "page": 14,
+    "span_start": 52,
+    "span_end": 203,
+    "file_name": "HR Bylaws.pdf"
+  },
+  {
+    "question": "What are the normal working hours specified in the HR Bylaws?",
+    "answer": "Normal working hours are eight hours per day and forty-eight hours per week, excluding breaks.",
+    "context": "Working Hours: Normal working hours are eight hours per day and forty-eight hours per week, excluding breaks.",
+    "page": 16,
+    "span_start": 40,
+    "span_end": 127,
+    "file_name": "HR Bylaws.pdf"
+  },
+  {
+    "question": "What is the annual leave entitlement for employees?",
+    "answer": "Employees are entitled to thirty calendar days of paid annual leave after completing one year of service.",
+    "context": "Annual Leave: Employees are entitled to thirty calendar days of paid annual leave after completing one year of service.",
+    "page": 19,
+    "span_start": 33,
+    "span_end": 137,
+    "file_name": "HR Bylaws.pdf"
+  },
+  {
+    "question": "Under what conditions can an employee's contract be terminated?",
+    "answer": "An employee's contract can be terminated due to mutual agreement, expiry of contract term, unsatisfactory performance, gross misconduct, or redundancy.",
+    "context": "Termination: An employee's contract can be terminated due to mutual agreement, expiry of contract term, unsatisfactory performance, gross misconduct, or redundancy.",
     "page": 25,
-    "span_start": 381,
-    "span_end": 435
+    "span_start": 28,
+    "span_end": 176,
+    "file_name": "HR Bylaws.pdf"
   },
   {
-    "question": "Which segment had the highest net sales for Apple in 2024?",
-    "answer": "The Americas segment had the highest net sales for Apple in 2024 at $167,045 million.",
-    "context": "Americas $ 167,045 3 % $ 162,560 (4)% $ 169,658",
-    "page": 25,
-    "span_start": 164,
-    "span_end": 211
+    "question": "What rights do employees have regarding equal treatment?",
+    "answer": "Employees have the right to equal treatment in employment without discrimination based on gender, nationality, religion, or disability.",
+    "context": "Employee Rights: Employees have the right to equal treatment in employment without discrimination based on gender, nationality, religion, or disability.",
+    "page": 12,
+    "span_start": 44,
+    "span_end": 173,
+    "file_name": "HR Bylaws.pdf"
   },
   {
-    "question": "What was the year-over-year change in Greater China net sales in 2024?",
-    "answer": "Greater China net sales decreased by 8% year-over-year in 2024.",
-    "context": "Greater China 66,952 (8)% 72,559 (2)% 74,200",
-    "page": 25,
-    "span_start": 250,
-    "span_end": 294
+    "file_name": "Inforamation-Security.pdf",
+    "question": "What is the main objective of the UAE Information Assurance (IA) Standards?",
+    "answer": "The main objective of the UAE IA Standards is to raise the minimum level of protection of information assets and supporting systems across all implementing entities in the UAE.",
+    "context": "The purpose of the UAE IA Standards is to provide requirements to raise the minimum level of protection of information assets and supporting systems across all implementing entities in the UAE, as outlined in Section 2.1.",
+    "page": 13,
+    "span_start": 0,
+    "span_end": 312
   },
   {
-    "question": "Which product category had the highest net sales for Apple in 2024?",
-    "answer": "iPhone had the highest net sales for Apple in 2024 at $201,183 million.",
-    "context": "iPhone $ 201,183 — % $ 200,583 (2)% $ 205,489",
-    "page": 26,
-    "span_start": 158,
-    "span_end": 203
+    "file_name": "Inforamation-Security.pdf",
+    "question": "Which nine technical control families are specified in the UAE IA Standards?",
+    "answer": "The nine technical control families are: Asset Management, Physical and Environmental Security, Operations Management, Communications, Access Control, Third-Party Security, Information Systems Acquisition Development and Maintenance, Information Security Incident Management, Information Systems Continuity Management.",
+    "context": "TECHNICAL CONTROL FAMILIES DESCRIPTION ASSET MANAGEMENT ... INFORMATION SYSTEMS CONTINUITY MANAGEMENT",
+    "page": 50,
+    "span_start": 28,
+    "span_end": 762
   },
   {
-    "question": "What was the year-over-year change in Services net sales in 2024?",
-    "answer": "Services net sales increased by 13% year-over-year in 2024.",
-    "context": "Services (1) 96,169 13 % 85,200 9 % 78,129",
-    "page": 26,
-    "span_start": 338,
+    "file_name": "Inforamation-Security.pdf",
+    "question": "What are the key elements of the risk-based approach described in Chapter 3 of the UAE IA Standards?",
+    "answer": "The risk-based approach consists of eight key activities: establishing the environment, risk identification, risk estimation, risk evaluation, risk treatment, risk acceptance, risk monitoring and review, and risk communication and consultation.",
+    "context": "It consists of eight key activities as illustrated in Figure 3. CONTEXT ESTABLISHMENT RISK COMMUNICATION AND CONSULTATION RISK MONITORING AND REVIEW RISK ASSESSMENT RISK ANALYSIS RISK IDENTIFICATION SERVICES/FUNCTIONS/SYSTEMS THREATS X VULNERABILITIES RISK ESTIMATION IMPACT X LIKELIHOOD RISK EVALUATION RISK TREATMENT REDUCTION AVOIDANCE RETENTION TRANSFER RISK ACCEPTANCE",
+    "page": 28,
+    "span_start": 397,
+    "span_end": 822
+  },
+  {
+    "file_name": "Inforamation-Security.pdf",
+    "question": "According to the UAE IA Standards, what are always applicable controls?",
+    "answer": "Always applicable controls are foundational IA capabilities that every relevant entity must implement regardless of their risk assessment outcomes.",
+    "context": "\"Always Applicable\" security controls shall be implemented by each relevant entity regardless of its risk assessment outcomes (refer to Annex 1 for a summary of \"Always Applicable\" controls).",
+    "page": 31,
+    "span_start": 400,
+    "span_end": 616
+  },
+  {
+    "file_name": "Inforamation-Security.pdf",
+    "question": "What are the responsibilities of the Information Security Committee in an entity as per the UAE IA Standards?",
+    "answer": "The Information Security Committee is responsible for overseeing and governing the establishment, implementation, maintenance, and continual improvement of information security in the entity, including defining roles and responsibilities, monitoring resource adequacy, and reviewing the results of performance measurement activities.",
+    "context": "The Information Security Committee should have a leading role for information security in the entity and should be responsible for handling the important information security issues. The members of the Information Security Committee should have a sufficient understanding of information security for directing, monitoring, and completing the necessary tasks. Typical tasks of an Information Security Committee could be: A. Defining and establishing roles and responsibilities for information security... I. Review the results of performance measurement activities J. Reviewing audit reports and initiating appropriate corrective actions",
+    "page": 55,
+    "span_start": 65,
+    "span_end": 709
+  },
+  {
+    "file_name": "Procurement-Manual-Ariba-Aligned.PDF",
+    "question": "What are the four main procurement capabilities defined in the Procurement Capability Model?",
+    "answer": "The four main procurement capabilities are: Strategic, Tactical, Operational, and Support.",
+    "context": "The Procurement Capability Model comprises of four types of procurement capabilities: Strategic, Tactical, Operational, and Support as illustrated below: Strategic Procurement Strategy Demand and Category Management Tactical Source to Contract Contract Lifecycle Management Supplier Performance and Relationship Management Operational Requisition to Pay Support Risk and Regulation Supplier Master Data Management Item Master Data Management User Master Data Management",
+    "page": 9,
+    "span_start": 244,
+    "span_end": 619
+  },
+  {
+    "file_name": "Procurement-Manual-Ariba-Aligned.PDF",
+    "question": "How does the Procurement Manual classify categories as Common or Entity-Specific?",
+    "answer": "A category that is procured by five or more Entities may be considered as a Common Category. The classification depends on the category spend value and its commonality across Entities.",
+    "context": "Classification of a category as a Common Category or an Entity-Specific Category depends on the category spend value and its commonality across Entities. A category that is procured by five or more Entities may be considered as a Common Category.",
+    "page": 8,
+    "span_start": 692,
+    "span_end": 868
+  },
+  {
+    "file_name": "Procurement-Manual-Ariba-Aligned.PDF",
+    "question": "What are the three types of Procurement Benefits and how are they defined?",
+    "answer": "The three types of Procurement Benefits are Cost Reduction, Cost Avoidance, and Cash Impact. Cost Reduction is direct reduction of cost compared to the baseline. Cost Avoidance is action taken to avoid future incremental costs. Cash Impact refers to a one-time impact such as improved payment terms or decreased inventory.",
+    "context": "Procurement Benefits can be classified into Cost Reduction, Cost Avoidance, and Cash Impact. Cost Reduction ‘same for less’ Cost Avoidance ‘avoiding future cost’ Cash Impact Definition • Benefits that directly reduce the cost base compared to the baseline • Costs can be one-offs or recurring/sustainable • Cost was not included in the original baseline",
+    "page": 11,
+    "span_start": 83,
+    "span_end": 438
+  },
+  {
+    "file_name": "Procurement-Manual-Ariba-Aligned.PDF",
+    "question": "What are the main steps involved in developing a Procurement Strategy according to the manual?",
+    "answer": "The main steps are: 1) Internal and External Analysis, 2) Develop Procurement Strategy, 3) Approve ‘Procurement Strategy’, and 4) Execute ‘Procurement Strategy’.",
+    "context": "Development of the ‘Procurement Strategy’ is an offline process. Following are the key steps to develop a ‘Procurement Strategy’: 2.1.1.(I) Step 1 – Internal and External Analysis ... 2.1.1.(II) Step 2 – Develop Procurement Strategy ... 2.1.1.(III) Step 3 - Approve ‘Procurement Strategy’ ... 2.1.1.(IV) Step 4 – Execute ‘Procurement Strategy’",
+    "page": 18,
+    "span_start": 298,
+    "span_end": 593
+  },
+  {
+    "file_name": "Procurement-Manual-Ariba-Aligned.PDF",
+    "question": "What documents are essential when preparing and approving a ‘Category Strategy’ in SAP Ariba?",
+    "answer": "The essential documents are the Overview Form, Internal Category Profile, External Category Analysis, and Category Strategy.",
+    "context": "2.2.4 Work Aids – Forms and Documents Procurement Processes Forms and Documents 2.2.3. (I) Prepare and Approve ‘Category Strategy’ Overview Form Internal Category Profile External Category Analysis Category Strategy",
+    "page": 43,
+    "span_start": 13,
+    "span_end": 173
+  },
+  {
+    "file_name": "Procurement-Manual-Business-Process.PDF",
+    "question": "What are the four types of procurement capabilities described in the Procurement Capability Model?",
+    "answer": "The four types of procurement capabilities are: Strategic, Tactical, Operational, and Support.",
+    "context": "The Procurement Capability Model comprises of four types of procurement capabilities: Strategic, Tactical, Operational, and Support as illustrated below: Strategic Procurement Strategy Demand and Category Management Tactical Source to Contract Contract Lifecycle Management Supplier Performance and Relationship Management Operational Requisition to Pay Support Risk and Regulation Supplier Master Data Management Item Master Data Management User Master Data Management",
+    "page": 10,
+    "span_start": 0,
     "span_end": 380
   },
   {
-    "question": "What was Apple's total gross margin percentage in fiscal year 2024?",
-    "answer": "Apple's total gross margin percentage in fiscal year 2024 was 46.2%.",
-    "context": "Total gross margin percentage 46.2 % 44.1 % 43.3 %",
-    "page": 27,
-    "span_start": 371,
-    "span_end": 421
+    "file_name": "Procurement-Manual-Business-Process.PDF",
+    "question": "How are Common Categories and Entity-Specific Categories classified in the procurement process?",
+    "answer": "Common Categories are those procured by five or more Entities, while Entity-Specific Categories are procured by less than five Entities.",
+    "context": "Classification of a category as a Common Category or an Entity-Specific Category depends on the category spend value and its commonality across Entities. A category that is procured by five or more Entities may be considered as a Common Category.",
+    "page": 8,
+    "span_start": 220,
+    "span_end": 366
   },
   {
-    "question": "How much did Apple spend on research and development in 2024?",
-    "answer": "Apple spent $31,370 million on research and development in 2024.",
-    "context": "Research and development $ 31,370 5 % $ 29,915 14 % $ 26,251",
-    "page": 27,
-    "span_start": 1312,
-    "span_end": 1372
+    "file_name": "Procurement-Manual-Business-Process.PDF",
+    "question": "What are the three types of Procurement Benefits defined in the manual, and how are they described?",
+    "answer": "The three types are Cost Reduction (direct cost base reduction), Cost Avoidance (avoiding future incremental costs), and Cash Impact (one-time impact such as improved payment terms or decreased inventory).",
+    "context": "Procurement Benefits can be classified into Cost Reduction, Cost Avoidance, and Cash Impact. Cost Reduction ‘same for less’ Cost Avoidance ‘avoiding future cost’ Cash Impact Definition • Benefits that directly reduce the cost base compared to the baseline • Costs can be one-offs or recurring/sustainable • Cost was not included in the original baseline • Action taken now to avoid future incremental costs • Could include initiatives that lead to cost reduction in the future • One - time impact of increased cash",
+    "page": 11,
+    "span_start": 28,
+    "span_end": 302
   },
   {
-    "question": "What was Apple's effective tax rate in 2024?",
-    "answer": "Apple's effective tax rate in 2024 was 24.1%.",
-    "context": "Effective tax rate 24.1 % 14.7 % 16.2 %",
-    "page": 28,
-    "span_start": 244,
-    "span_end": 283
+    "file_name": "Procurement-Manual-Business-Process.PDF",
+    "question": "What are the main steps to develop and execute a 'Procurement Strategy' according to the manual?",
+    "answer": "The main steps are: conduct internal and external analysis, develop the Procurement Strategy, approve the Procurement Strategy, and execute the Procurement Strategy.",
+    "context": "2.1.2.(I) Create and Execute ‘Procurement Strategy’ ... Procedures and Methodologies i. Conduct Internal and External Analysis ... ii. Develop ‘Procurement Strategy’ ... iii. Approve ‘Procurement Strategy’ ... iv. Execute ‘Procurement Strategy’ ...",
+    "page": 18,
+    "span_start": 120,
+    "span_end": 240
   },
   {
-    "question": "How much did Apple spend on share repurchases in fiscal year 2024?",
-    "answer": "Apple repurchased $95.0 billion of its common stock in fiscal year 2024.",
-    "context": "During 2024, the Company repurchased $95.0 billion of its common stock and paid dividends and dividend equivalents of $15.2 billion.",
-    "page": 29,
-    "span_start": 930,
-    "span_end": 1062
-  },
-  {
-    "question": "What was the balance of Apple's deemed repatriation tax payable as of September 28, 2024?",
-    "answer": "The balance of Apple's deemed repatriation tax payable was $16.5 billion as of September 28, 2024.",
-    "context": "As of September 28, 2024, the balance of the deemed repatriation tax payable imposed by the U.S. Tax Cuts and Jobs Act of 2017 (the ",
-    "page": 28,
-    "span_start": 3387,
-    "span_end": 3519
+    "file_name": "Procurement-Manual-Business-Process.PDF",
+    "question": "According to the manual, what is the role of the Category Manager in the Demand and Category Management process?",
+    "answer": "The Category Manager is responsible for completing the Internal Category Profile and External Category Analysis, creating and monitoring the Category Strategy, sharing the approved Category Strategy with relevant stakeholders, conducting periodic reviews of its execution, and communicating completion to stakeholders.",
+    "context": "Role Responsibilities Category Manager 1. Complete ‘Internal Category Profile’ and ‘External Category Analysis’. 2. Create ‘Category Strategy’. 3. Share approved ‘Category Strategy’ with relevant stakeholders. 4. Conduct periodic reviews of the ‘Category Strategy’ execution. 5. Communicate ‘Category Strategy’ completion to relevant stakeholders.",
+    "page": 26,
+    "span_start": 0,
+    "span_end": 350
   }
 ]

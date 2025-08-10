@@ -1,8 +1,4 @@
 FROM ghcr.io/open-webui/pipelines:latest
-
-# Install your needed packages
 RUN pip install httpx
-
-# Optionally copy your custom pipelines
 COPY ./pipelines /app/pipelines
 
