@@ -2,11 +2,12 @@
 import os
 from app.core.vectordb import VectorDB
 from app.core.bm25engine import IRSearchEngine
-from app.core.llms import query_ollama
+from app.core.llms import query_ollama, get_openrouter_llm
 from typing import List, Dict
 from llama_index.core import Document
 from llama_index.core.schema import BaseNode
 from llama_index.core.postprocessor.llm_rerank import LLMRerank
+from llama_index.core.llms import ChatMessage
 from dotenv import load_dotenv
 import numpy as np
 import json
@@ -168,8 +169,6 @@ class HybridRetrievalSystem:
 
         # Construct user prompt with query and passages (truncated to fit context)
         prompt = f"""
-        You are a relevance ranking engine.
-
         Given a query and {len(docs)} passages, return a JSON array of exactly {len(docs)} numeric scores
         in the SAME order as the passages.
         Each score must be between 1.0 (lowest) and 10.0 (highest).
@@ -187,7 +186,14 @@ class HybridRetrievalSystem:
 
         prompt += f"\nOutput only the JSON array of exactly {len(docs)} scores, like this:\n[9.2, 8.5, 3.1, 7.0]"
 
-        response = query_ollama(prompt=prompt, system_prompt=None)
+        llm = get_openrouter_llm()
+        messages = [
+            ChatMessage(role="system", content="You are a relevance ranking engine."),
+            ChatMessage(role="user", content=prompt)
+        ]
+        response = llm.chat(messages)
+        response = response.message.content
+
         try:
             scores = json.loads(response)
             if not isinstance(scores, list) or len(scores) != len(docs):

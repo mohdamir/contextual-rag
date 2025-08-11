@@ -5,8 +5,9 @@ from app.models.schemas import QueryRequest, QueryResponse, QueryResponseSource
 from app.core.bm25engine import BM25TFIDFEngine, BMI25_STORE_PATH
 from app.core.vectordb import PGVectorDB
 from app.core.hybridretriever import HybridRetrievalSystem
-from app.core.llms import llm, query_ollama
+from app.core.llms import get_ollama_llm
 from app.services.crew_service import CrewService, CrewAIConfig
+from llama_index.core.llms import ChatMessage
 from typing import List, Dict
 import json
 
@@ -91,8 +92,21 @@ def perform_query(prompt: str, retrieved_chunks: List[Dict]) -> QueryResponse:
     )
 
     # Calling LLM with the constructed prompt
-    response = query_ollama(prompt=prompt, system_prompt=system_prompt)
-    response_text = str(response)
+    #response = query_ollama(prompt=prompt, system_prompt=system_prompt)
+    #response_text = str(response)
+
+    # Instantiate your LLM
+    llm = get_ollama_llm()
+
+    # Build the chat history
+    messages = [
+        ChatMessage(role="system", content=system_prompt),
+        ChatMessage(role="user", content=prompt)
+    ]
+
+    # Call the LLM directly
+    response = llm.chat(messages)
+    response_text = response.message.content
 
     # Prepare Sources
     sources = []

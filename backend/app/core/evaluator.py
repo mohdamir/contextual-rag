@@ -16,7 +16,7 @@ from app.api.query import perform_query, get_hybrid_retriever
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.models.schemas import QueryRequest, GroundTruthItem
 from .utils import load_ground_truth_files
-from app.core.llms import llm, embedding_model
+from app.core.llms import get_openrouter_llm, embedding_model
 import torch
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -29,7 +29,7 @@ GT_DIR = "./data/ground_truth"
 
 class RAGEvaluator:
     def __init__(self):
-        self.llm = llm
+        self.llm = get_openrouter_llm()
         self.embedding_model = embedding_model
         
     def calculate_similarity(self, answer1: str, answer2: str) -> float:

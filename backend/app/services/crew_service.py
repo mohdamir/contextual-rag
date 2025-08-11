@@ -1,6 +1,6 @@
 from crewai import Agent, Task, Crew
 from pydantic import BaseModel
-from app.core.llms import get_litellm_ollama
+from app.core.llms import get_chatopenai_llm
 
 import logging
 
@@ -15,7 +15,7 @@ class CrewService:
     def __init__(self, config: CrewAIConfig):
         self.config = config
         self.logger = logging.getLogger(__name__)
-        self.llm = get_litellm_ollama()
+        self.llm = get_chatopenai_llm()
 
     def _create_agent(self, role: str, goal: str, backstory: str, tools: list = None) -> Agent:
         """Helper to create agents with Ollama configuration"""

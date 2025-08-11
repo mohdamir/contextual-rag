@@ -38,6 +38,8 @@ llama-index-readers-docling
 llama-index-node-parser-docling
 
 llama-index-llms-ollama==0.7.0
+llama-index-llms-openai==0.5.0
+llama-index-llms-openrouter==0.4.0
 llama-index-embeddings-ollama==0.7.0
 ollama==0.5.3
 
@@ -53,3 +55,4 @@ crewai==0.100.0
 ragas==0.3.0
 litellm==1.57.4
 faiss-cpu==1.11.0.post1
+langchain-community==0.3.27

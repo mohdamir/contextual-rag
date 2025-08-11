@@ -248,7 +248,6 @@ class PGVectorDB(VectorDB):
             results = []
             for node_with_score in retrieved_nodes:
                 node = node_with_score.node
-                logger.info(f"Node with node id {node.node_id}")
                 # Get document reference
                 doc = None
                 doc = self.doc_store.get_document(node.node_id)
