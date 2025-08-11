@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import httpx
 from llama_index.llms.ollama import Ollama
 from llama_index.llms.openrouter import OpenRouter
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from llama_index.embeddings.ollama import OllamaEmbedding
 from ragas.llms import LlamaIndexLLMWrapper
 from ragas.embeddings import LlamaIndexEmbeddingsWrapper

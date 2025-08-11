@@ -1,15 +1,12 @@
 from crewai import Agent, Task, Crew
 from pydantic import BaseModel
 from app.core.llms import get_chatopenai_llm
-
 import logging
-
 
 class CrewAIConfig(BaseModel):
     verbose: bool = True
     max_iter: int = 3
     enable_prompt_enhancer: bool = True
-
 
 class CrewService:
     def __init__(self, config: CrewAIConfig):

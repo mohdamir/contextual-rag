@@ -1,15 +1,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from app.models.schemas import QueryRequest, QueryResponse
-from app.services.rag_service import RagService
-
-
-
-def get_rag_service():
-    return RagService()
+from app.services.rag_service import RagService, get_rag_service
 
 router = APIRouter()
-
 
 @router.post("/", response_model=QueryResponse)
 async def query_documents(request: QueryRequest, rag_service: RagService = Depends(get_rag_service)):

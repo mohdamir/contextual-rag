@@ -8,8 +8,7 @@ from app.core.llms import get_ollama_llm
 from app.services.crew_service import CrewService, CrewAIConfig
 from app.core.bm25engine import BM25TFIDFEngine, BMI25_STORE_PATH
 from app.core.vectordb import PGVectorDB
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from openinference.instrumentation.crewai import CrewAIInstrumentor 
+
 import json
 import time
 from phoenix.otel import register
@@ -19,14 +18,9 @@ load_dotenv()
 POSTGRES_URL = os.getenv("DATABASE_URL")
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
 
-os.environ.pop("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)  # remove manual override
-os.environ.pop("OTEL_EXPORTER_OTLP_PROTOCOL", None)         # use default (gRPC)
-tracer_provider = register(
-    project_name="Contextual-RAG",
-    auto_instrument=True,
-)
-LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
-CrewAIInstrumentor().instrument(tracer_provider=tracer_provider)
+
+def get_rag_service():
+    return RagService()
 
 def get_hybrid_retriever() -> HybridRetrievalSystem:
     vector_db = PGVectorDB(POSTGRES_URL, table_name="contextual_rag", embed_dim=CHUNK_SIZE, recreate_table=False)
@@ -37,7 +31,7 @@ def get_hybrid_retriever() -> HybridRetrievalSystem:
     )
 
 retriever = get_hybrid_retriever()
-crew_service = CrewService(config=CrewAIConfig(verbose=True, max_iter=1, trace_provider=tracer_provider))
+crew_service = CrewService(config=CrewAIConfig(verbose=True, max_iter=1))
 
 class RagService:
     def __init__(self):

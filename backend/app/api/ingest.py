@@ -1,28 +1,17 @@
+import os
+import uuid
+import mimetypes
+from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
-from llama_index.core import SimpleDirectoryReader
+from fastapi.responses import JSONResponse
 from app.core.utils import save_uploaded_file, delete_file
 from app.core.vectordb import PGVectorDB
 from app.core.bm25engine import BM25TFIDFEngine
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.core.chunker import get_chunker_from_env, PDFChunkerBase
-import os
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from fastapi.responses import JSONResponse
-from phoenix.otel import register
-import os
-import uuid
-import mimetypes
-from datetime import datetime
+
 from dotenv import load_dotenv
 load_dotenv()
-
-os.environ.pop("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)  # remove manual override
-os.environ.pop("OTEL_EXPORTER_OTLP_PROTOCOL", None)         # use default (gRPC)
-tracer_provider = register(
-    project_name="Contextual-RAG",
-    auto_instrument=True,
-)
-LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
 POSTGRES_URL = os.getenv('DATABASE_URL')
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE'))
