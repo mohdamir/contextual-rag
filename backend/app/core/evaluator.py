@@ -1,9 +1,6 @@
 import time
 import numpy as np
-import pandas as pd
-import json
-from sentence_transformers import util, SentenceTransformer
-from sklearn.metrics import ndcg_score
+from sentence_transformers import util
 from ragas import evaluate
 from ragas import EvaluationDataset, SingleTurnSample
 from ragas.metrics import (
@@ -12,11 +9,11 @@ from ragas.metrics import (
     context_recall,
     context_precision
 )
-from app.api.query import perform_query, get_hybrid_retriever
-from app.core.hybridretriever import HybridRetrievalSystem
-from app.models.schemas import QueryRequest, GroundTruthItem
+
+from app.models.schemas import  GroundTruthItem
 from .utils import load_ground_truth_files
 from app.core.llms import get_openrouterragas_llm, get_ollamaragas_embedding, get_embedding_model
+from app.services.rag_service import RagService
 import torch
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -29,6 +26,7 @@ class RAGEvaluator:
     def __init__(self):
         self.llm = get_openrouterragas_llm()
         self.embedding_model =get_ollamaragas_embedding()
+        self.rag_service = RagService()
         
     def calculate_similarity(self, answer1: str, answer2: str) -> float:
         """Calculate cosine similarity between two answers"""
@@ -121,12 +119,8 @@ class RAGEvaluator:
 
             # Run query
             start_time = time.perf_counter()
-            query_request = QueryRequest(query=gt_item.question, top_k=top_k)
-            retriever = get_hybrid_retriever()
-            retrieved_chunks = retriever.retrieve(query_request.query, top_k=top_k, fusion_method="rrf")
-            
-            response = perform_query(query_request.query, retrieved_chunks)
-            
+
+            response = self.rag_service.chat(gt_item.question, top_k=top_k)
             latency = time.perf_counter() - start_time
 
             # Calculate basic metrics
