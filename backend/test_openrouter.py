@@ -2,7 +2,7 @@ import requests
 
 url = "https://openrouter.ai/api/v1/chat/completions"
 headers = {
-    "Authorization": "Bearer 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",
+    "Authorization": "Bearer <your ke here>",
     "Content-Type": "application/json"
 }
 
