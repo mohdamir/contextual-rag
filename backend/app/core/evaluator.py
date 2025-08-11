@@ -1,4 +1,3 @@
-import os
 import time
 import numpy as np
 import pandas as pd
@@ -6,6 +5,7 @@ import json
 from sentence_transformers import util, SentenceTransformer
 from sklearn.metrics import ndcg_score
 from ragas import evaluate
+from ragas import EvaluationDataset, SingleTurnSample
 from ragas.metrics import (
     faithfulness,
     answer_relevancy,
@@ -16,26 +16,25 @@ from app.api.query import perform_query, get_hybrid_retriever
 from app.core.hybridretriever import HybridRetrievalSystem
 from app.models.schemas import QueryRequest, GroundTruthItem
 from .utils import load_ground_truth_files
-from app.core.llms import get_openrouter_llm, embedding_model
+from app.core.llms import get_openrouterragas_llm, get_ollamaragas_embedding, get_embedding_model
 import torch
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize models
-similarity_model = embedding_model
 GT_DIR = "./data/ground_truth"
 
 class RAGEvaluator:
     def __init__(self):
-        self.llm = get_openrouter_llm()
-        self.embedding_model = embedding_model
+        self.llm = get_openrouterragas_llm()
+        self.embedding_model =get_ollamaragas_embedding()
         
     def calculate_similarity(self, answer1: str, answer2: str) -> float:
         """Calculate cosine similarity between two answers"""
-        answer1_embedding = self.embedding_model.get_text_embedding(answer1)
-        answer2_embedding = self.embedding_model.get_text_embedding(answer2)
+        embedding_model = get_embedding_model()
+        answer1_embedding = embedding_model.get_text_embedding(answer1)
+        answer2_embedding = embedding_model.get_text_embedding(answer2)
         
         if not isinstance(answer1_embedding, torch.Tensor):
             answer1_embedding = torch.tensor(answer1_embedding)
@@ -49,31 +48,43 @@ class RAGEvaluator:
         
         return util.cos_sim(answer1_embedding, answer2_embedding).item()
 
-    def calculate_recall(self, ground_truth: GroundTruthItem, retrieved_sources: list) -> float:
-        """Calculate recall for a single query"""
-        gt_context = ground_truth.context
-        for source in retrieved_sources:
-            if gt_context in source.text:
-                return 1.0
-        return 0.0
-
-    def evaluate_with_ragas(self, question: str, answer: str, contexts: List[str]) -> Dict[str, float]:
+    def evaluate_with_ragas(self, 
+                            question: str, 
+                            answer: str, 
+                            ground_truth: str, 
+                            retrieved_contexts: List[str],
+                            contexts: List[str],
+                            user_input: str,
+                            response: str) -> Dict[str, float]:
         """Evaluate using RAGAs metrics"""
+        
+        samples = [
+            SingleTurnSample(
+                question=question,
+                answer=answer,
+                contexts=contexts,
+                ground_truth=ground_truth,
+                retrieved_contexts=retrieved_contexts,
+                reference=ground_truth,
+                user_input=user_input,
+                response=response
+            )
+        ]
+
+        # Create an EvaluationDataset instance
+        eval_dataset = EvaluationDataset(samples=samples)
         result = evaluate(
-            dataset={
-                "question": [question],
-                "answer": [answer],
-                "contexts": [contexts]
-            },
+            dataset=eval_dataset,
             metrics=[
                 faithfulness,
                 answer_relevancy,
                 context_recall,
                 context_precision
             ],
-            llm=self.llm
+            llm=self.llm,
+            embeddings=self.embedding_model
         )
-        return {k: v for k, v in result.items()}
+        return result
 
     def evaluate_rag(self, top_k: int = 3) -> Dict[str, Any]:
         """Run full RAG evaluation with enhanced metrics"""
@@ -113,24 +124,29 @@ class RAGEvaluator:
             query_request = QueryRequest(query=gt_item.question, top_k=top_k)
             retriever = get_hybrid_retriever()
             retrieved_chunks = retriever.retrieve(query_request.query, top_k=top_k, fusion_method="rrf")
-            response = perform_query(query_request, retrieved_chunks, self.llm)
+            
+            response = perform_query(query_request.query, retrieved_chunks)
+            
             latency = time.perf_counter() - start_time
 
             # Calculate basic metrics
             similarity = self.calculate_similarity(gt_item.answer, response.answer)
-            recall = self.calculate_recall(gt_item, response.sources)
 
             # Calculate RAGAs metrics
             ragas_result = self.evaluate_with_ragas(
                 question=gt_item.question,
                 answer=response.answer,
-                contexts=[s.text for s in response.sources]
+                ground_truth=gt_item.answer,
+                retrieved_contexts=[s.text for s in response.sources],
+                contexts=gt_item.context,
+                user_input=gt_item.question,
+                response = response.answer
+
             )
 
             # Store results
             metrics["latencies"].append(latency)
             metrics["similarities"].append(similarity)
-            metrics["recalls"].append(recall)
             metrics["faithfulness"].append(ragas_result["faithfulness"])
             metrics["answer_relevancy"].append(ragas_result["answer_relevancy"])
             metrics["context_recall"].append(ragas_result["context_recall"])
@@ -141,7 +157,6 @@ class RAGEvaluator:
                 "ground_truth": gt_item.answer,
                 "rag_answer": response.answer,
                 "similarity": similarity,
-                "recall": recall,
                 "faithfulness": ragas_result["faithfulness"],
                 "answer_relevancy": ragas_result["answer_relevancy"],
                 "context_recall": ragas_result["context_recall"],
@@ -153,7 +168,6 @@ class RAGEvaluator:
         # Calculate aggregate statistics
         metrics["aggregates"] = {
             "mean_similarity": np.mean(metrics["similarities"]),
-            "mean_recall": np.mean(metrics["recalls"]),
             "mean_faithfulness": np.mean(metrics["faithfulness"]),
             "mean_answer_relevancy": np.mean(metrics["answer_relevancy"]),
             "mean_context_recall": np.mean(metrics["context_recall"]),
@@ -172,7 +186,6 @@ class RAGEvaluator:
         
         Performance Metrics:
         - Average Similarity: {metrics['aggregates']['mean_similarity']:.2f}
-        - Average Recall@k: {metrics['aggregates']['mean_recall']:.2f}
         - Average Faithfulness: {metrics['aggregates']['mean_faithfulness']:.2f}
         - Average Answer Relevancy: {metrics['aggregates']['mean_answer_relevancy']:.2f}
         - Average Context Recall: {metrics['aggregates']['mean_context_recall']:.2f}

@@ -54,7 +54,6 @@ class SanitizeJSONMiddleware(BaseHTTPMiddleware):
                 return JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
         return await call_next(request)
 
-app.add_middleware(SanitizeJSONMiddleware)
 
 # CORS configuration
 app.add_middleware(
@@ -64,7 +63,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(SanitizeJSONMiddleware)
+#app.add_middleware(SanitizeJSONMiddleware)
 
 app.include_router(ingest.router, prefix="/ingest", tags=["Ingestion"])
 app.include_router(query.router, prefix="/query", tags=["Query"])

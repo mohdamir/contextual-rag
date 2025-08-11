@@ -8,6 +8,9 @@ from llama_index.llms.ollama import Ollama
 from llama_index.llms.openrouter import OpenRouter
 from langchain_community.chat_models import ChatOpenAI
 from llama_index.embeddings.ollama import OllamaEmbedding
+from ragas.llms import LlamaIndexLLMWrapper
+from ragas.embeddings import LlamaIndexEmbeddingsWrapper
+from llama_index.llms.openrouter import OpenRouter
 import json
 import requests
 
@@ -64,14 +67,13 @@ def get_chatopenai_llm() -> ChatOpenAI:
         return llm
 
 
-def get_openrouter_llm() -> OpenRouter:
-    llm = OpenRouter(
+def get_openrouter_llm(model_name:Optional[str] = None) ->OpenRouter:
+    return OpenRouter(
+        model= model_name or os.getenv("ANTHROPIC_MODEL"),
         api_key=os.getenv("OPENROUTER_API_KEY"),
         api_base=os.getenv("OPENROUTER_API_BASE"),
-        model=os.getenv("ANTHROPIC_MODEL"),
-        temperature=float(os.getenv("LLM_TEMPERATURE"))
-        )
-    return llm
+        temperature=float(os.getenv("LLM_TEMPERATURE")),
+    )
 
 def query_ollama(
     prompt: str,
@@ -141,6 +143,15 @@ def query_ollama(
         raise ConnectionError(f"Ollama connection error: {e}")
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid response format: {e}")
+
+
+def get_openrouterragas_llm() ->LlamaIndexLLMWrapper:
+    evaluator_llm = LlamaIndexLLMWrapper(get_openrouter_llm(model_name="openai/gpt-4o-mini"))
+    return evaluator_llm
+
+def get_ollamaragas_embedding() -> LlamaIndexEmbeddingsWrapper:
+    return LlamaIndexEmbeddingsWrapper(get_embedding_model())
+
 
 
 embedding_model = get_embedding_model()

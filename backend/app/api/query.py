@@ -91,10 +91,6 @@ def perform_query(prompt: str, retrieved_chunks: List[Dict]) -> QueryResponse:
         f"Answer:"
     )
 
-    # Calling LLM with the constructed prompt
-    #response = query_ollama(prompt=prompt, system_prompt=system_prompt)
-    #response_text = str(response)
-
     # Instantiate your LLM
     llm = get_ollama_llm()
 
